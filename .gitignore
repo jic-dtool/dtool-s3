@@ -1,1 +1,14 @@
 .DS_Store
+data
+
+*.pyc
+*.pyc
+*.swp
+*.egg-info
+
+.cache
+.coverage
+.eggs
+.tox
+
+dist

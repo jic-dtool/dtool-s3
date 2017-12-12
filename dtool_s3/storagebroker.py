@@ -1,3 +1,4 @@
+import os
 import json
 import time
 
@@ -6,6 +7,8 @@ from botocore.errorfactory import ClientError
 
 from dtoolcore.utils import (
     generate_identifier,
+    get_config_value,
+    mkdir_parents,
 )
 
 from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
@@ -29,6 +32,12 @@ class S3StorageBroker(object):
         self.readme_fpath = uuid + '/README.yml'
         self.data_prefix = uuid + '/data/'
         self.manifest_fpath = uuid + '/manfest.json'
+
+        self._s3_cache_abspath = get_config_value(
+            "DTOOL_S3_CACHE_DIRECTORY",
+            config_path=config_path,
+            default=os.path.expanduser("~/.cache/dtool/s3")
+        )
 
     @classmethod
     def generate_uri(cls, name, uuid, prefix):
@@ -78,6 +87,61 @@ class S3StorageBroker(object):
 
         return response['Body'].read().decode('utf-8')
 
+#############################################################################
+# Methods only used by DataSet.
+#############################################################################
+
+    def get_manifest(self):
+        """Return the manifest contents from S3.
+
+        :returns: manifest as a dictionary
+        """
+        response = self.s3resource.Object(
+            self.bucket,
+            self.manifest_fpath
+        ).get()
+
+        manifest_as_string = response['Body'].read().decode('utf-8')
+        return json.loads(manifest_as_string)
+
+    def get_item_abspath(self, identifier):
+        """Return absolute path at which item content can be accessed.
+
+        :param identifier: item identifier
+        :returns: absolute path from which the item content can be accessed
+        """
+        admin_metadata = self.get_admin_metadata()
+        uuid = admin_metadata["uuid"]
+        # Create directory for the specific dataset.
+        dataset_cache_abspath = os.path.join(self._s3_cache_abspath, uuid)
+        mkdir_parents(dataset_cache_abspath)
+
+        bucket_fpath = self.data_prefix + identifier
+        obj = self.s3resource.Object(self.bucket, bucket_fpath)
+        relpath = obj.get()['Metadata']['handle']
+        _, ext = os.path.splitext(relpath)
+
+        local_item_abspath = os.path.join(
+            dataset_cache_abspath,
+            identifier + ext
+        )
+
+        self.s3resource.Bucket(self.bucket).download_file(
+            bucket_fpath,
+            local_item_abspath
+        )
+
+        return local_item_abspath
+
+    def list_overlay_names(self):
+        """Return list of overlay names."""
+
+        return []
+
+#############################################################################
+# Methods only used by ProtoDataSet.
+#############################################################################
+
     def put_readme(self, content):
 
         self.s3resource.Object(self.bucket, self.readme_fpath).put(
@@ -114,12 +178,16 @@ class S3StorageBroker(object):
         bucket = self.s3resource.Bucket(self.bucket)
 
         for obj in bucket.objects.filter(Prefix=self.data_prefix).all():
-            yield obj.key
+            relpath = obj.get()['Metadata']['handle']
+
+            yield relpath
 
     def item_properties(self, handle):
         """Return properties of the item with the given handle."""
 
-        obj = self.s3resource.Object(self.bucket, handle)
+        identifier = generate_identifier(handle)
+        bucket_fpath = self.data_prefix + identifier
+        obj = self.s3resource.Object(self.bucket, bucket_fpath)
 
         size = int(obj.content_length)
         checksum = obj.e_tag[1:-1]

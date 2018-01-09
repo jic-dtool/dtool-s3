@@ -255,7 +255,8 @@ class S3StorageBroker(object):
         :param value: metadata value
         """
 
-        bucket_fpath = self.fragment_prefix + '.{}.json'.format(key)
+        identifier = generate_identifier(handle)
+        bucket_fpath = self.fragment_prefix + '{}.{}.json'.format(identifier, key)
 
         self.s3resource.Object(self.bucket, bucket_fpath).put(
             Body=json.dumps(value)
@@ -325,7 +326,10 @@ class S3StorageBroker(object):
         bucket = self.s3resource.Bucket(self.bucket)
 
         metadata = {}
-        for obj in bucket.objects.filter(Prefix=self.fragment_prefix).all():
+
+        identifier = generate_identifier(handle)
+        prefix = self.fragment_prefix + '{}'.format(identifier)
+        for obj in bucket.objects.filter(Prefix=prefix).all():
             metadata_key = obj.key.split('.')[-2]
             response = obj.get()
             value_as_string = response['Body'].read().decode('utf-8')

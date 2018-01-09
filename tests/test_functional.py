@@ -223,3 +223,35 @@ def test_creation_and_reading(tmp_uuid_and_uri):  # NOQA
     expected_hash = md5sum_hexdigest(local_file_path)
     assert generated_manifest['items'][expected_identifier]['hash'] \
         == expected_hash
+
+
+def test_files_with_whitespace(tmp_uuid_and_uri):  # NOQA
+
+    uuid, dest_uri = tmp_uuid_and_uri
+
+    from dtoolcore import ProtoDataSet, generate_admin_metadata
+    from dtoolcore import DataSet
+    from dtoolcore.utils import generate_identifier
+
+    name = "my_dataset"
+    admin_metadata = generate_admin_metadata(name)
+    admin_metadata["uuid"] = uuid
+
+    sample_data_path = os.path.join(TEST_SAMPLE_DATA)
+    local_file_path = os.path.join(sample_data_path, 'tiny.png')
+
+    # Create a minimal dataset
+    proto_dataset = ProtoDataSet(
+        uri=dest_uri,
+        admin_metadata=admin_metadata,
+        config_path=None)
+    proto_dataset.create()
+    proto_dataset.put_item(local_file_path, 'tiny with space.png')
+    proto_dataset.freeze()
+
+    # Read in a dataset
+    dataset = DataSet.from_uri(dest_uri)
+
+    expected_identifier = generate_identifier('tiny with space.png')
+    assert expected_identifier in dataset.identifiers
+    assert len(dataset.identifiers) == 1

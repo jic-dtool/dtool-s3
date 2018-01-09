@@ -1,6 +1,8 @@
 
 import os
+import datetime
 
+import pytz
 import pytest
 
 from dtoolcore.filehasher import md5sum_hexdigest
@@ -131,3 +133,93 @@ def test_proto_dataset_freeze_functional(tmp_uuid_and_uri):  # NOQA
     namelen_overlay = dataset.get_overlay('namelen')
     expected_identifier = generate_identifier('another_file.txt')
     assert namelen_overlay[expected_identifier] == len('another_file.txt')
+
+
+def test_creation_and_reading(tmp_uuid_and_uri):  # NOQA
+    from dtoolcore import ProtoDataSet, generate_admin_metadata
+
+    uuid, dest_uri = tmp_uuid_and_uri
+
+    name = "func_test_dataset"
+    admin_metadata = generate_admin_metadata(name)
+    admin_metadata["uuid"] = uuid
+
+    sample_data_path = os.path.join(TEST_SAMPLE_DATA)
+
+    # Create a proto dataset
+    proto_dataset = ProtoDataSet(
+        uri=dest_uri,
+        admin_metadata=admin_metadata,
+        config_path=None)
+    proto_dataset.create()
+    proto_dataset.put_readme("")
+
+    assert proto_dataset.name == "func_test_dataset"
+
+    # Test reading from URI.
+    proto_dataset = ProtoDataSet.from_uri(dest_uri)
+    assert proto_dataset.name == "func_test_dataset"
+
+    # Test get/put readme.
+    assert proto_dataset.get_readme_content() == ""
+    proto_dataset.put_readme("Hello world!")
+    assert proto_dataset.get_readme_content() == "Hello world!"
+
+    # Test putting a local file
+    handle = "tiny.png"
+    local_file_path = os.path.join(sample_data_path, 'tiny.png')
+    proto_dataset.put_item(local_file_path, handle)
+    assert handle in list(proto_dataset._storage_broker.iter_item_handles())
+
+    # Test properties of that file
+    expected_hash = md5sum_hexdigest(
+        os.path.join(sample_data_path, 'tiny.png')
+    )
+    item_properties = proto_dataset._storage_broker.item_properties(handle)
+    assert item_properties['relpath'] == 'tiny.png'
+    assert item_properties['size_in_bytes'] == 276
+    assert item_properties['hash'] == expected_hash
+    assert 'utc_timestamp' in item_properties
+    time_from_item = datetime.datetime.fromtimestamp(
+        float(item_properties['utc_timestamp']),
+        tz=pytz.UTC
+    )
+    time_delta = datetime.datetime.now(tz=pytz.UTC) - time_from_item
+    assert time_delta.days == 0
+    assert time_delta.seconds < 100
+
+    # Add metadata
+    proto_dataset.add_item_metadata(handle, 'foo', 'bar')
+    proto_dataset.add_item_metadata(
+        handle,
+        'key',
+        {'subkey': 'subval',
+         'morekey': 'moreval'}
+    )
+
+    # Test metadata retrieval
+    metadata = proto_dataset._storage_broker.get_item_metadata(handle)
+    assert metadata == {
+        'foo': 'bar',
+        'key': {
+            'subkey': 'subval',
+            'morekey': 'moreval'
+        }
+    }
+
+    # Add another item and test manifest
+    from dtoolcore import __version__
+    from dtoolcore.utils import generate_identifier
+    local_file_path = os.path.join(sample_data_path, 'real_text_file.txt')
+    proto_dataset.put_item(local_file_path, 'real_text_file.txt')
+    second_handle = 'real_text_file.txt'
+    generated_manifest = proto_dataset.generate_manifest()
+    assert generated_manifest['hash_function'] == 'md5sum_hexdigest'
+    assert generated_manifest['dtoolcore_version'] == __version__
+    expected_identifier = generate_identifier(second_handle)
+    assert expected_identifier in generated_manifest['items']
+    assert generated_manifest['items'][expected_identifier]['relpath'] \
+        == 'real_text_file.txt'
+    expected_hash = md5sum_hexdigest(local_file_path)
+    assert generated_manifest['items'][expected_identifier]['hash'] \
+        == expected_hash

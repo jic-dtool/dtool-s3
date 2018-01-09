@@ -1,4 +1,6 @@
 
+import os
+
 import pytest
 
 from dtoolcore import generate_admin_metadata
@@ -6,6 +8,8 @@ from dtool_s3.storagebroker import (
     S3StorageBroker,
 )
 
+_HERE = os.path.dirname(__file__)
+TEST_SAMPLE_DATA = os.path.join(_HERE, "data")
 
 def _all_objects_in_storage_broker(storage_broker):
 
@@ -13,6 +17,9 @@ def _all_objects_in_storage_broker(storage_broker):
 
     for obj in bucket.objects.filter(Prefix=storage_broker.uuid).all():
         yield obj.key
+
+    registration_key = "dtool-{}".format(storage_broker.uuid)
+    yield registration_key
 
 
 def _chunks(l, n):

@@ -11,6 +11,14 @@ from . import tmp_uuid_and_uri  # NOQA
 from . import TEST_SAMPLE_DATA
 
 
+def _prefix_contains_something(storage_broker, prefix):
+    bucket = storage_broker.s3resource.Bucket(storage_broker.bucket)
+    prefix_objects = list(
+        bucket.objects.filter(Prefix=prefix).all()
+    )
+    return len(prefix_objects) > 0
+
+
 def test_basic_workflow(tmp_uuid_and_uri):  # NOQA
 
     uuid, dest_uri = tmp_uuid_and_uri
@@ -83,6 +91,13 @@ def test_proto_dataset_freeze_functional(tmp_uuid_and_uri):  # NOQA
             filename[0]
         )
 
+
+    # At this point the temporary fragments should exist.
+    assert _prefix_contains_something(
+        proto_dataset._storage_broker,
+        proto_dataset._storage_broker.fragment_prefix
+    )
+
     proto_dataset.put_readme(content='Hello world!')
 
     # We shouldn't be able to load this as a DataSet
@@ -91,9 +106,11 @@ def test_proto_dataset_freeze_functional(tmp_uuid_and_uri):  # NOQA
 
     proto_dataset.freeze()
 
-    # Freezing removes the temporary metadata fragments directory.
-    # assert not os.path.isdir(
-    #     proto_dataset._storage_broker._metadata_fragments_abspath)
+    # Freezing removes the temporary metadata fragments.
+    assert not _prefix_contains_something(
+        proto_dataset._storage_broker,
+        proto_dataset._storage_broker.fragment_prefix
+    )
 
     # Now we shouln't be able to load as a ProtoDataSet
     with pytest.raises(DtoolCoreTypeError):

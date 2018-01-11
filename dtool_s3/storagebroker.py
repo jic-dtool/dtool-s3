@@ -310,7 +310,28 @@ class S3StorageBroker(object):
         pass
 
     def post_freeze_hook(self):
-        pass
+
+        # Delete the temporary fragment metadata objects from the bucket.
+
+        # Get the keys of the fragment metadata objects.
+        bucket = self.s3resource.Bucket(self.bucket)
+        prefix_object_keys = [
+            obj.key for obj in
+            bucket.objects.filter(Prefix=self.fragment_prefix).all()
+        ]
+
+        def _chunks(l, n):
+            """Yield successive n-sized chunks from l."""
+
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
+        # Delete the chunks of 500 fragment metadata objects.
+        for keys in _chunks(prefix_object_keys, 500):
+            keys_as_list_of_dicts = [{'Key': k} for k in keys]
+            response = bucket.objects.delete(
+                Delete={'Objects': keys_as_list_of_dicts}
+            )
 
     def get_item_metadata(self, handle):
         """Return dictionary containing all metadata associated with handle.

@@ -19,6 +19,7 @@ setup(
         "click",
         "dtoolcore>=2.2.0",
         "dtool_cli",
+        "boto3",
     ],
     entry_points={
         "dtool.storage_brokers": [

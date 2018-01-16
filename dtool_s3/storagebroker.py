@@ -21,9 +21,9 @@ from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
 
 
 _STRUCTURE_PARAMETERS = {
-        "data_prefix": "data/",
-        "fragment_prefix": "fragments/",
-        "overlays_prefix": "overlays/",
+        "data_key_infix": "data",
+        "fragment_key_infix": "fragments",
+        "overlays_key_infix": "overlays",
         "structure_key_suffix": "structure.json",
         "readme_key_suffix": "README.yml",
         "manifest_key_suffix": "manifest.json",
@@ -88,16 +88,20 @@ class S3StorageBroker(object):
 
     def _set_prefixes(self):
 
-        def generate_key_prefix(structure_dict_key):
+        def generate_key(structure_dict_key):
             return self.uuid + '/' + _STRUCTURE_PARAMETERS[structure_dict_key]
 
-        self.admin_metadata_key_suffix = generate_key_prefix("admin_metadata_key_suffix")
-        self.readme_key_suffix = generate_key_prefix("readme_key_suffix")
-        self.data_prefix = generate_key_prefix("data_prefix")
-        self.manifest_key_suffix = generate_key_prefix("manifest_key_suffix")
-        self.fragment_prefix = generate_key_prefix("fragment_prefix")
-        self.overlays_prefix = generate_key_prefix("overlays_prefix")
-        self.structure_key_suffix = generate_key_prefix("structure_key_suffix")
+        def generate_key_prefix(structure_dict_key):
+            return self.uuid + '/' + _STRUCTURE_PARAMETERS[structure_dict_key] + '/'
+
+        self.data_key_prefix = generate_key_prefix("data_key_infix")
+        self.fragments_key_prefix = generate_key_prefix("fragment_key_infix")
+        self.overlays_key_prefix = generate_key_prefix("overlays_key_infix")
+
+        self.admin_metadata_key = generate_key("admin_metadata_key_suffix")
+        self.readme_key = generate_key("readme_key_suffix")
+        self.manifest_key = generate_key("manifest_key_suffix")
+        self.structure_key = generate_key("structure_key_suffix")
 
 
     @classmethod
@@ -139,7 +143,7 @@ class S3StorageBroker(object):
 
         # Write out self descriptive metadata.
 
-        self.s3resource.Object(self.bucket, self.structure_key_suffix).put(
+        self.s3resource.Object(self.bucket, self.structure_key).put(
             Body=''
         )
 
@@ -149,7 +153,7 @@ class S3StorageBroker(object):
         for k, v in admin_metadata.items():
             admin_metadata[k] = str(v)
 
-        self.s3resource.Object(self.bucket, self.admin_metadata_key_suffix).put(
+        self.s3resource.Object(self.bucket, self.admin_metadata_key).put(
             Body='dtoolfile',
             Metadata=admin_metadata
         )
@@ -158,7 +162,7 @@ class S3StorageBroker(object):
 
         response = self.s3resource.Object(
             self.bucket,
-            self.admin_metadata_key_suffix
+            self.admin_metadata_key
         ).get()
 
         return response['Metadata']
@@ -179,7 +183,7 @@ class S3StorageBroker(object):
 
         response = self.s3resource.Object(
             self.bucket,
-            self.readme_key_suffix
+            self.readme_key
         ).get()
 
         return response['Body'].read().decode('utf-8')
@@ -193,7 +197,7 @@ class S3StorageBroker(object):
         :param overlay_name: name of the overlay
         :overlay: overlay dictionary
         """
-        bucket_fpath = os.path.join(self.overlays_prefix, overlay_name + '.json')
+        bucket_fpath = os.path.join(self.overlays_key_prefix, overlay_name + '.json')
         self.s3resource.Object(self.bucket, bucket_fpath).put(
             Body=json.dumps(overlay)
         )
@@ -209,7 +213,7 @@ class S3StorageBroker(object):
         """
         response = self.s3resource.Object(
             self.bucket,
-            self.manifest_key_suffix
+            self.manifest_key
         ).get()
 
         manifest_as_string = response['Body'].read().decode('utf-8')
@@ -227,7 +231,7 @@ class S3StorageBroker(object):
         dataset_cache_abspath = os.path.join(self._s3_cache_abspath, uuid)
         mkdir_parents(dataset_cache_abspath)
 
-        bucket_fpath = self.data_prefix + identifier
+        bucket_fpath = self.data_key_prefix + identifier
         obj = self.s3resource.Object(self.bucket, bucket_fpath)
         relpath = obj.get()['Metadata']['handle']
         _, ext = os.path.splitext(relpath)
@@ -251,7 +255,7 @@ class S3StorageBroker(object):
         bucket = self.s3resource.Bucket(self.bucket)
 
         overlay_names = []
-        for obj in bucket.objects.filter(Prefix=self.overlays_prefix).all():
+        for obj in bucket.objects.filter(Prefix=self.overlays_key_prefix).all():
 
             overlay_file = obj.key.rsplit('/', 1)[-1]
             overlay_name, ext = overlay_file.split('.')
@@ -266,7 +270,7 @@ class S3StorageBroker(object):
         :returns: overlay as a dictionary
         """
 
-        overlay_fpath = self.overlays_prefix + overlay_name + '.json'
+        overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
 
         response = self.s3resource.Object(
             self.bucket,
@@ -283,14 +287,14 @@ class S3StorageBroker(object):
 
     def put_readme(self, content):
 
-        self.s3resource.Object(self.bucket, self.readme_key_suffix).put(
+        self.s3resource.Object(self.bucket, self.readme_key).put(
             Body=content
         )
 
     def put_item(self, fpath, relpath):
 
         fname = generate_identifier(relpath)
-        dest_path = self.data_prefix + fname
+        dest_path = self.data_key_prefix + fname
         self.s3client.upload_file(
             fpath,
             self.bucket,
@@ -310,7 +314,7 @@ class S3StorageBroker(object):
         """
 
         identifier = generate_identifier(handle)
-        bucket_fpath = self.fragment_prefix + '{}.{}.json'.format(identifier, key)
+        bucket_fpath = self.fragments_key_prefix + '{}.{}.json'.format(identifier, key)
 
         self.s3resource.Object(self.bucket, bucket_fpath).put(
             Body=json.dumps(value)
@@ -325,7 +329,7 @@ class S3StorageBroker(object):
         :param manifest: dictionary with manifest structural metadata
         """
 
-        self.s3resource.Object(self.bucket, self.manifest_key_suffix).put(
+        self.s3resource.Object(self.bucket, self.manifest_key).put(
             Body=json.dumps(manifest)
         )
 
@@ -334,7 +338,7 @@ class S3StorageBroker(object):
 
         bucket = self.s3resource.Bucket(self.bucket)
 
-        for obj in bucket.objects.filter(Prefix=self.data_prefix).all():
+        for obj in bucket.objects.filter(Prefix=self.data_key_prefix).all():
             relpath = obj.get()['Metadata']['handle']
 
             yield relpath
@@ -343,7 +347,7 @@ class S3StorageBroker(object):
         """Return properties of the item with the given handle."""
 
         identifier = generate_identifier(handle)
-        bucket_fpath = self.data_prefix + identifier
+        bucket_fpath = self.data_key_prefix + identifier
         obj = self.s3resource.Object(self.bucket, bucket_fpath)
 
         size = int(obj.content_length)
@@ -371,7 +375,7 @@ class S3StorageBroker(object):
         bucket = self.s3resource.Bucket(self.bucket)
         prefix_object_keys = [
             obj.key for obj in
-            bucket.objects.filter(Prefix=self.fragment_prefix).all()
+            bucket.objects.filter(Prefix=self.fragments_key_prefix).all()
         ]
 
         def _chunks(l, n):
@@ -403,7 +407,7 @@ class S3StorageBroker(object):
         metadata = {}
 
         identifier = generate_identifier(handle)
-        prefix = self.fragment_prefix + '{}'.format(identifier)
+        prefix = self.fragments_key_prefix + '{}'.format(identifier)
         for obj in bucket.objects.filter(Prefix=prefix).all():
             metadata_key = obj.key.split('.')[-2]
             response = obj.get()

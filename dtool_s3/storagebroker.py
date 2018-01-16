@@ -20,6 +20,45 @@ from dtoolcore.utils import (
 from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
 
 
+_STRUCTURE_PARAMETERS = {
+        "admin_metadata_key": "dtool",
+        "readme_filename": "README.yml",
+        "data_prefix": "data/",
+        "manifest_filename": "manifest.json",
+        "fragment_prefix": "fragments/",
+        "overlays_prefix": "overlays/",
+        "structure_fpath": "structure.json"
+}
+
+_DTOOL_README_TXT = """README
+======
+This is a Dtool dataset stored in S3 accessible storage.
+
+Content provided during the dataset creation process
+----------------------------------------------------
+
+Dataset descriptive metadata: README.yml
+Dataset items: data/
+
+The item identifiers are used to name the files in the data
+collection/directory.
+
+An item identifier is the sha1sum hexdigest of the relative path
+used to represent the file on traditional file system disk.
+
+Automatically generated files and directories
+---------------------------------------------
+
+This file: .dtool/README.txt
+Administrative metadata describing the dataset: .dtool/dtool
+Structural metadata describing the dataset: .dtool/structure.json
+Structural metadata describing the data items: .dtool/manifest.json
+Per item descriptive metadata: .dtool/overlays/
+"""
+
+
+
+
 class S3StorageBroker(object):
 
     #: Attribute used to define the type of storage broker.
@@ -37,20 +76,29 @@ class S3StorageBroker(object):
         uuid = parse_result.path[1:]
 
         self.uuid = uuid
-        self.metadata_filename = uuid + '/dtool'
         self.s3resource = boto3.resource('s3')
         self.s3client = boto3.client('s3')
-        self.readme_fpath = uuid + '/README.yml'
-        self.data_prefix = uuid + '/data/'
-        self.manifest_fpath = uuid + '/manfest.json'
-        self.fragment_prefix = uuid + '/fragments/'
-        self.overlays_prefix = uuid + '/overlays/'
+        self._set_prefixes()
 
         self._s3_cache_abspath = get_config_value(
             "DTOOL_S3_CACHE_DIRECTORY",
             config_path=config_path,
             default=os.path.expanduser("~/.cache/dtool/s3")
         )
+
+    def _set_prefixes(self):
+
+        def generate_key_prefix(structure_dict_key):
+            return self.uuid + '/' + _STRUCTURE_PARAMETERS[structure_dict_key]
+
+        self.metadata_filename = generate_key_prefix("admin_metadata_key")
+        self.readme_fpath = generate_key_prefix("readme_filename")
+        self.data_prefix = generate_key_prefix("data_prefix")
+        self.manifest_fpath = generate_key_prefix("manifest_filename")
+        self.fragment_prefix = generate_key_prefix("fragment_prefix")
+        self.overlays_prefix = generate_key_prefix("overlays_prefix")
+        self.structure_fpath = generate_key_prefix("structure_fpath")
+
 
     @classmethod
     def list_dataset_uris(cls, base_uri, config_path):
@@ -86,6 +134,12 @@ class S3StorageBroker(object):
 
         registration_key_name = 'dtool-{}'.format(self.uuid)
         self.s3resource.Object(self.bucket, registration_key_name).put(
+            Body=''
+        )
+
+        # Write out self descriptive metadata.
+
+        self.s3resource.Object(self.bucket, self.structure_fpath).put(
             Body=''
         )
 

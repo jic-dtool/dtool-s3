@@ -1,5 +1,6 @@
 
 import os
+import json
 
 import pytest
 
@@ -11,6 +12,17 @@ from dtool_s3.storagebroker import (
 _HERE = os.path.dirname(__file__)
 TEST_SAMPLE_DATA = os.path.join(_HERE, "data")
 
+
+def _key_exists_in_storage_broker(storage_broker, key):
+
+    bucket = storage_broker.s3resource.Bucket(storage_broker.bucket)
+
+    objs = list(bucket.objects.filter(Prefix=key))
+    if len(objs) > 0 and objs[0].key == key:
+        return True
+    else:
+        return False
+
 def _all_objects_in_storage_broker(storage_broker):
 
     bucket = storage_broker.s3resource.Bucket(storage_broker.bucket)
@@ -20,6 +32,17 @@ def _all_objects_in_storage_broker(storage_broker):
 
     registration_key = "dtool-{}".format(storage_broker.uuid)
     yield registration_key
+
+
+def _get_data_structure_from_key(storage_broker, key):
+
+    response = storage_broker.s3resource.Object(
+        storage_broker.bucket,
+        key
+    ).get()
+
+    content_as_string = response['Body'].read().decode('utf-8')
+    return json.loads(content_as_string)
 
 
 def _chunks(l, n):

@@ -21,13 +21,13 @@ from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
 
 
 _STRUCTURE_PARAMETERS = {
-        "data_key_infix": "data",
-        "fragment_key_infix": "fragments",
-        "overlays_key_infix": "overlays",
-        "structure_key_suffix": "structure.json",
-        "readme_key_suffix": "README.yml",
-        "manifest_key_suffix": "manifest.json",
-        "admin_metadata_key_suffix": "dtool",
+    "data_key_infix": "data",
+    "fragment_key_infix": "fragments",
+    "overlays_key_infix": "overlays",
+    "structure_key_suffix": "structure.json",
+    "readme_key_suffix": "README.yml",
+    "manifest_key_suffix": "manifest.json",
+    "admin_metadata_key_suffix": "dtool",
 }
 
 _DTOOL_README_TXT = """README
@@ -144,7 +144,7 @@ class S3StorageBroker(object):
         # Write out self descriptive metadata.
 
         self.s3resource.Object(self.bucket, self.structure_key).put(
-            Body=''
+            Body=json.dumps(_STRUCTURE_PARAMETERS)
         )
 
 

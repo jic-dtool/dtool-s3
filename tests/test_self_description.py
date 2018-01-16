@@ -1,0 +1,47 @@
+"""Test the S3StorageBroker self description metadata."""
+
+import os
+
+from . import (
+    tmp_uuid_and_uri,  # NOQA
+    _key_exists_in_storage_broker,
+    _get_data_structure_from_key
+)
+
+def test_writing_of_dtool_structure_file(tmp_uuid_and_uri):  # NOQA
+    from dtoolcore import ProtoDataSet, generate_admin_metadata
+    from dtoolcore.utils import generous_parse_uri
+
+    # Create a proto dataset.
+    uuid, dest_uri = tmp_uuid_and_uri
+    name = "test_dtool_structure_file"
+    admin_metadata = generate_admin_metadata(name)
+    admin_metadata["uuid"] = uuid
+    proto_dataset = ProtoDataSet(
+        uri=dest_uri,
+        admin_metadata=admin_metadata,
+        config_path=None
+    )
+    proto_dataset.create()
+
+    # Check that the ".dtool/structure.json" file exists.
+    expected_s3_key = uuid + '/structure.json'
+    assert _key_exists_in_storage_broker(
+        proto_dataset._storage_broker,
+        expected_s3_key
+    )
+
+    expected_content = {
+        "data_key_infix": "data",
+        "fragment_key_infix": "fragments",
+        "overlays_key_infix": "overlays",
+        "structure_key_suffix": "structure.json",
+        "readme_key_suffix": "README.yml",
+        "manifest_key_suffix": "manifest.json",
+        "admin_metadata_key_suffix": "dtool",
+    }
+    actual_content = _get_data_structure_from_key(
+        proto_dataset._storage_broker,
+        expected_s3_key
+    )
+    assert expected_content == actual_content

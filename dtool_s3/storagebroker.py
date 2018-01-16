@@ -21,13 +21,13 @@ from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
 
 
 _STRUCTURE_PARAMETERS = {
-        "admin_metadata_key": "dtool",
-        "readme_filename": "README.yml",
         "data_prefix": "data/",
-        "manifest_filename": "manifest.json",
         "fragment_prefix": "fragments/",
         "overlays_prefix": "overlays/",
-        "structure_fpath": "structure.json"
+        "structure_key_suffix": "structure.json",
+        "readme_key_suffix": "README.yml",
+        "manifest_key_suffix": "manifest.json",
+        "admin_metadata_key_suffix": "dtool",
 }
 
 _DTOOL_README_TXT = """README
@@ -91,13 +91,13 @@ class S3StorageBroker(object):
         def generate_key_prefix(structure_dict_key):
             return self.uuid + '/' + _STRUCTURE_PARAMETERS[structure_dict_key]
 
-        self.metadata_filename = generate_key_prefix("admin_metadata_key")
-        self.readme_fpath = generate_key_prefix("readme_filename")
+        self.admin_metadata_key_suffix = generate_key_prefix("admin_metadata_key_suffix")
+        self.readme_key_suffix = generate_key_prefix("readme_key_suffix")
         self.data_prefix = generate_key_prefix("data_prefix")
-        self.manifest_fpath = generate_key_prefix("manifest_filename")
+        self.manifest_key_suffix = generate_key_prefix("manifest_key_suffix")
         self.fragment_prefix = generate_key_prefix("fragment_prefix")
         self.overlays_prefix = generate_key_prefix("overlays_prefix")
-        self.structure_fpath = generate_key_prefix("structure_fpath")
+        self.structure_key_suffix = generate_key_prefix("structure_key_suffix")
 
 
     @classmethod
@@ -139,7 +139,7 @@ class S3StorageBroker(object):
 
         # Write out self descriptive metadata.
 
-        self.s3resource.Object(self.bucket, self.structure_fpath).put(
+        self.s3resource.Object(self.bucket, self.structure_key_suffix).put(
             Body=''
         )
 
@@ -149,7 +149,7 @@ class S3StorageBroker(object):
         for k, v in admin_metadata.items():
             admin_metadata[k] = str(v)
 
-        self.s3resource.Object(self.bucket, self.metadata_filename).put(
+        self.s3resource.Object(self.bucket, self.admin_metadata_key_suffix).put(
             Body='dtoolfile',
             Metadata=admin_metadata
         )
@@ -158,7 +158,7 @@ class S3StorageBroker(object):
 
         response = self.s3resource.Object(
             self.bucket,
-            self.metadata_filename
+            self.admin_metadata_key_suffix
         ).get()
 
         return response['Metadata']
@@ -179,7 +179,7 @@ class S3StorageBroker(object):
 
         response = self.s3resource.Object(
             self.bucket,
-            self.readme_fpath
+            self.readme_key_suffix
         ).get()
 
         return response['Body'].read().decode('utf-8')
@@ -209,7 +209,7 @@ class S3StorageBroker(object):
         """
         response = self.s3resource.Object(
             self.bucket,
-            self.manifest_fpath
+            self.manifest_key_suffix
         ).get()
 
         manifest_as_string = response['Body'].read().decode('utf-8')
@@ -283,7 +283,7 @@ class S3StorageBroker(object):
 
     def put_readme(self, content):
 
-        self.s3resource.Object(self.bucket, self.readme_fpath).put(
+        self.s3resource.Object(self.bucket, self.readme_key_suffix).put(
             Body=content
         )
 
@@ -325,7 +325,7 @@ class S3StorageBroker(object):
         :param manifest: dictionary with manifest structural metadata
         """
 
-        self.s3resource.Object(self.bucket, self.manifest_fpath).put(
+        self.s3resource.Object(self.bucket, self.manifest_key_suffix).put(
             Body=json.dumps(manifest)
         )
 

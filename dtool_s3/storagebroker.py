@@ -100,7 +100,7 @@ class S3StorageBroker(object):
             return self.uuid + '/' + _STRUCTURE_PARAMETERS[structure_dict_key]
 
         def generate_key_prefix(structure_dict_key):
-            return self.uuid + '/' + _STRUCTURE_PARAMETERS[structure_dict_key] + '/'
+            return generate_key(structure_dict_key) + '/'
 
         self.data_key_prefix = generate_key_prefix("data_key_infix")
         self.fragments_key_prefix = generate_key_prefix("fragment_key_infix")

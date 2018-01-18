@@ -36,7 +36,8 @@ Security
 Fixed
 ^^^^^
 
-- dtoolcore dependency
+- README.rst
+- dtoolcore dependency in ``setup.py``
 
 
 [0.1.0] - 2018-01-18

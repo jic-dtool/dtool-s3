@@ -91,7 +91,6 @@ def test_proto_dataset_freeze_functional(tmp_uuid_and_uri):  # NOQA
             filename[0]
         )
 
-
     # At this point the temporary fragments should exist.
     assert _prefix_contains_something(
         proto_dataset._storage_broker,

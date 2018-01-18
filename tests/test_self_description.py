@@ -1,17 +1,15 @@
 """Test the S3StorageBroker self description metadata."""
 
-import os
-
+from . import tmp_uuid_and_uri  # NOQA
 from . import (
-    tmp_uuid_and_uri,  # NOQA
     _key_exists_in_storage_broker,
     _get_data_structure_from_key,
     _get_unicode_from_key
 )
 
+
 def test_writing_of_dtool_structure_file(tmp_uuid_and_uri):  # NOQA
     from dtoolcore import ProtoDataSet, generate_admin_metadata
-    from dtoolcore.utils import generous_parse_uri
 
     # Create a proto dataset.
     uuid, dest_uri = tmp_uuid_and_uri
@@ -52,7 +50,6 @@ def test_writing_of_dtool_structure_file(tmp_uuid_and_uri):  # NOQA
 
 def test_writing_of_dtool_readme_file(tmp_uuid_and_uri):  # NOQA
     from dtoolcore import ProtoDataSet, generate_admin_metadata
-    from dtoolcore.utils import generous_parse_uri
 
     # Create a proto dataset.
     uuid, dest_uri = tmp_uuid_and_uri

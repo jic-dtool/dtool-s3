@@ -23,6 +23,7 @@ def _key_exists_in_storage_broker(storage_broker, key):
     else:
         return False
 
+
 def _all_objects_in_storage_broker(storage_broker):
 
     bucket = storage_broker.s3resource.Bucket(storage_broker.bucket)
@@ -76,7 +77,7 @@ def _remove_dataset(uri):
     # Max objects to delete in one API call is 1000, we'll do 500 for safety
     for keys in _chunks(object_key_list, 500):
         keys_as_list_of_dicts = [{'Key': k} for k in keys]
-        response = bucket.objects.delete(
+        bucket.objects.delete(
             Delete={'Objects': keys_as_list_of_dicts}
         )
 
@@ -86,7 +87,11 @@ def tmp_uuid_and_uri(request):
     admin_metadata = generate_admin_metadata("test_dataset")
     uuid = admin_metadata["uuid"]
 
-    uri = S3StorageBroker.generate_uri("test_dataset", uuid, "s3://test-dtool-s3-bucket")
+    uri = S3StorageBroker.generate_uri(
+        "test_dataset",
+        uuid,
+        "s3://test-dtool-s3-bucket"
+    )
 
     @request.addfinalizer
     def teardown():

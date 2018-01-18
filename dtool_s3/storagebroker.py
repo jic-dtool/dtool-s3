@@ -112,7 +112,6 @@ class S3StorageBroker(object):
         self.manifest_key = generate_key("manifest_key_suffix")
         self.structure_key = generate_key("structure_key_suffix")
 
-
     @classmethod
     def list_dataset_uris(cls, base_uri, config_path):
         """Return list containing URIs with base URI."""
@@ -151,14 +150,13 @@ class S3StorageBroker(object):
         )
 
         # Write out self descriptive metadata.
-        _STRUCTURE_PARAMETERS["dataset_registration_key"] = dataset_registration_key
+        _STRUCTURE_PARAMETERS["dataset_registration_key"] = dataset_registration_key  # NOQA
         self.s3resource.Object(self.bucket, self.structure_key).put(
             Body=json.dumps(_STRUCTURE_PARAMETERS)
         )
         self.s3resource.Object(self.bucket, self.dtool_readme_key).put(
             Body=_DTOOL_README_TXT
         )
-
 
     def put_admin_metadata(self, admin_metadata):
 
@@ -209,7 +207,10 @@ class S3StorageBroker(object):
         :param overlay_name: name of the overlay
         :overlay: overlay dictionary
         """
-        bucket_fpath = os.path.join(self.overlays_key_prefix, overlay_name + '.json')
+        bucket_fpath = os.path.join(
+            self.overlays_key_prefix,
+            overlay_name + '.json'
+        )
         self.s3resource.Object(self.bucket, bucket_fpath).put(
             Body=json.dumps(overlay)
         )
@@ -267,7 +268,9 @@ class S3StorageBroker(object):
         bucket = self.s3resource.Bucket(self.bucket)
 
         overlay_names = []
-        for obj in bucket.objects.filter(Prefix=self.overlays_key_prefix).all():
+        for obj in bucket.objects.filter(
+            Prefix=self.overlays_key_prefix
+        ).all():
 
             overlay_file = obj.key.rsplit('/', 1)[-1]
             overlay_name, ext = overlay_file.split('.')
@@ -326,7 +329,8 @@ class S3StorageBroker(object):
         """
 
         identifier = generate_identifier(handle)
-        bucket_fpath = self.fragments_key_prefix + '{}.{}.json'.format(identifier, key)
+        suffix = '{}.{}.json'.format(identifier, key)
+        bucket_fpath = self.fragments_key_prefix + suffix
 
         self.s3resource.Object(self.bucket, bucket_fpath).put(
             Body=json.dumps(value)
@@ -399,7 +403,7 @@ class S3StorageBroker(object):
         # Delete the chunks of 500 fragment metadata objects.
         for keys in _chunks(prefix_object_keys, 500):
             keys_as_list_of_dicts = [{'Key': k} for k in keys]
-            response = bucket.objects.delete(
+            bucket.objects.delete(
                 Delete={'Objects': keys_as_list_of_dicts}
             )
 

@@ -20,7 +20,9 @@ from dtoolcore.utils import (
 from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
 
 
+# We update the dataset_registration_key when we have the UUID for the dataset
 _STRUCTURE_PARAMETERS = {
+    "dataset_registration_key": None,
     "data_key_infix": "data",
     "fragment_key_infix": "fragments",
     "overlays_key_infix": "overlays",
@@ -40,8 +42,10 @@ Content provided during the dataset creation process
 
 Dataset registration key (at top level of bucket): dtool-$UUID
 
-Where UUID is the unique identifier for the dataset. This UUID is used as a
-prefix for all other keys in the dataset.
+Where UUID is the unique identifier for the dataset. The file is empty and
+used to aid fast enumeration of unique datasets in the bucket.
+
+The UUID is used as a prefix for all other keys in the dataset.
 
 Dataset descriptive metadata: $UUID/README.yml
 Dataset items prefixed by: $UUID/data/
@@ -141,12 +145,13 @@ class S3StorageBroker(object):
 
     def create_structure(self):
 
-        registration_key_name = 'dtool-{}'.format(self.uuid)
-        self.s3resource.Object(self.bucket, registration_key_name).put(
+        dataset_registration_key = 'dtool-{}'.format(self.uuid)
+        self.s3resource.Object(self.bucket, dataset_registration_key).put(
             Body=''
         )
 
         # Write out self descriptive metadata.
+        _STRUCTURE_PARAMETERS["dataset_registration_key"] = dataset_registration_key
         self.s3resource.Object(self.bucket, self.structure_key).put(
             Body=json.dumps(_STRUCTURE_PARAMETERS)
         )

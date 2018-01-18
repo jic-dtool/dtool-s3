@@ -33,6 +33,7 @@ def test_writing_of_dtool_structure_file(tmp_uuid_and_uri):  # NOQA
     )
 
     expected_content = {
+        "dataset_registration_key": "dtool-{}".format(uuid),
         "data_key_infix": "data",
         "fragment_key_infix": "fragments",
         "overlays_key_infix": "overlays",

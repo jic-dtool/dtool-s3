@@ -8,11 +8,14 @@ setup(
     name="dtool-s3",
     packages=["dtool_s3"],
     version=version,
-    description="Add iRODS support to dtool",
+    description="Add S3 support to dtool",
     long_description=readme,
     include_package_data=True,
-    author="Matthew Hartley",
-    author_email="matthew.hartley@jic.ac.uk",
+    # Package will be released using Tjelvar's PyPi credentials.
+    author="Tjelvar Olsson",
+    author_email="tjelvar.olsson@jic.ac.uk",
+#   author="Matthew Hartley",
+#   author_email="matthew.hartley@jic.ac.uk",
     url=url,
     download_url="{}/tarball/{}".format(url, version),
     install_requires=[

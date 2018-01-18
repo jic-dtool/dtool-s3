@@ -45,6 +45,18 @@ def _get_data_structure_from_key(storage_broker, key):
     return json.loads(content_as_string)
 
 
+def _get_unicode_from_key(storage_broker, key):
+
+    response = storage_broker.s3resource.Object(
+        storage_broker.bucket,
+        key
+    ).get()
+
+    content_as_string = response['Body'].read().decode('utf-8')
+
+    return content_as_string
+
+
 def _chunks(l, n):
     """Yield successive n-sized chunks from l."""
 

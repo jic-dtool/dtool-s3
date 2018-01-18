@@ -25,7 +25,8 @@ _STRUCTURE_PARAMETERS = {
     "fragment_key_infix": "fragments",
     "overlays_key_infix": "overlays",
     "structure_key_suffix": "structure.json",
-    "readme_key_suffix": "README.yml",
+    "dtool_readme_key_suffix": "README.txt",
+    "dataset_readme_key_suffix": "README.yml",
     "manifest_key_suffix": "manifest.json",
     "admin_metadata_key_suffix": "dtool",
 }
@@ -37,11 +38,16 @@ This is a Dtool dataset stored in S3 accessible storage.
 Content provided during the dataset creation process
 ----------------------------------------------------
 
-Dataset descriptive metadata: README.yml
-Dataset items: data/
+Dataset registration key (at top level of bucket): dtool-$UUID
 
-The item identifiers are used to name the files in the data
-collection/directory.
+Where UUID is the unique identifier for the dataset. This UUID is used as a
+prefix for all other keys in the dataset.
+
+Dataset descriptive metadata: $UUID/README.yml
+Dataset items prefixed by: $UUID/data/
+
+The item identifiers are used to name the files using the data
+prefix.
 
 An item identifier is the sha1sum hexdigest of the relative path
 used to represent the file on traditional file system disk.
@@ -49,14 +55,12 @@ used to represent the file on traditional file system disk.
 Automatically generated files and directories
 ---------------------------------------------
 
-This file: .dtool/README.txt
-Administrative metadata describing the dataset: .dtool/dtool
-Structural metadata describing the dataset: .dtool/structure.json
-Structural metadata describing the data items: .dtool/manifest.json
-Per item descriptive metadata: .dtool/overlays/
+This file: $UUID/README.txt
+Administrative metadata describing the dataset: $UUID/dtool
+Structural metadata describing the dataset: $UUID/structure.json
+Structural metadata describing the data items: $UUID/manifest.json
+Per item descriptive metadata prefixed by: $UUID/overlays/
 """
-
-
 
 
 class S3StorageBroker(object):
@@ -99,7 +103,8 @@ class S3StorageBroker(object):
         self.overlays_key_prefix = generate_key_prefix("overlays_key_infix")
 
         self.admin_metadata_key = generate_key("admin_metadata_key_suffix")
-        self.readme_key = generate_key("readme_key_suffix")
+        self.dtool_readme_key = generate_key("dtool_readme_key_suffix")
+        self.dataset_readme_key = generate_key("dataset_readme_key_suffix")
         self.manifest_key = generate_key("manifest_key_suffix")
         self.structure_key = generate_key("structure_key_suffix")
 
@@ -142,9 +147,11 @@ class S3StorageBroker(object):
         )
 
         # Write out self descriptive metadata.
-
         self.s3resource.Object(self.bucket, self.structure_key).put(
             Body=json.dumps(_STRUCTURE_PARAMETERS)
+        )
+        self.s3resource.Object(self.bucket, self.dtool_readme_key).put(
+            Body=_DTOOL_README_TXT
         )
 
 
@@ -183,7 +190,7 @@ class S3StorageBroker(object):
 
         response = self.s3resource.Object(
             self.bucket,
-            self.readme_key
+            self.dataset_readme_key
         ).get()
 
         return response['Body'].read().decode('utf-8')
@@ -287,7 +294,7 @@ class S3StorageBroker(object):
 
     def put_readme(self, content):
 
-        self.s3resource.Object(self.bucket, self.readme_key).put(
+        self.s3resource.Object(self.bucket, self.dataset_readme_key).put(
             Body=content
         )
 

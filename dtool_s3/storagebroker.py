@@ -31,6 +31,7 @@ _STRUCTURE_PARAMETERS = {
     "dataset_readme_key_suffix": "README.yml",
     "manifest_key_suffix": "manifest.json",
     "admin_metadata_key_suffix": "dtool",
+    "http_manifest_key": "http_manifest.json"
 }
 
 _DTOOL_README_TXT = """README
@@ -111,6 +112,7 @@ class S3StorageBroker(object):
         self.dataset_readme_key = generate_key("dataset_readme_key_suffix")
         self.manifest_key = generate_key("manifest_key_suffix")
         self.structure_key = generate_key("structure_key_suffix")
+        self.http_manifest_key = generate_key("http_manifest_key")
 
     @classmethod
     def list_dataset_uris(cls, base_uri, config_path):
@@ -433,3 +435,68 @@ class S3StorageBroker(object):
             metadata[metadata_key] = value
 
         return metadata
+
+    # HTTP enabling functions
+
+    def generate_key_url(self, key):
+
+        url = "https://{}.s3.amazonaws.com/{}".format(
+            self.bucket,
+            key
+        )
+
+        return url
+
+    def make_key_public(self, key):
+        acl = self.s3resource.ObjectAcl(self.bucket, key)
+        acl.put(ACL='public-read')
+
+    def http_enable(self):
+
+        self.make_key_public(self.dataset_readme_key)
+        self.make_key_public(self.manifest_key)
+
+        for overlay_name in self.list_overlay_names():
+            overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
+            self.make_key_public(overlay_fpath)
+
+        manifest = self.get_manifest()
+        for identifier in manifest["items"]:
+            self.make_key_public(self.data_key_prefix + identifier)
+
+        access_url = "https://{}.s3.amazonaws.com/{}".format(self.bucket, self.uuid)
+
+        return access_url
+
+    def generate_http_manifest(self):
+
+        readme_url = self.generate_key_url(self.dataset_readme_key)
+        manifest_url = self.generate_key_url(self.manifest_key)
+
+        overlays = {}
+        for overlay_name in self.list_overlay_names():
+            overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
+            overlays[overlay_name] = self.generate_key_url(overlay_fpath)
+
+        manifest = self.get_manifest()
+        item_urls = {}
+        for identifier in manifest["items"]:
+            item_urls[identifier] = self.generate_key_url(self.data_key_prefix + identifier)
+
+        http_manifest = {
+            "admin_metadata": self.get_admin_metadata(),
+            "item_urls": item_urls,
+            "overlays": overlays,
+            "readme_url": readme_url,
+            "manifest_url": manifest_url
+        }
+
+        return http_manifest
+
+    def write_http_manifest(self, http_manifest):
+
+        self.s3resource.Object(self.bucket, self.http_manifest_key).put(
+            Body=json.dumps(http_manifest)
+        )
+
+        self.make_key_public(self.http_manifest_key)

@@ -10,6 +10,8 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
+- Added ``http_enable`` method to the ``S3StorageBroker`` class,  to allow publishing of datasets
+
 
 Changed
 ^^^^^^^

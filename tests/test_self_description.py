@@ -40,6 +40,7 @@ def test_writing_of_dtool_structure_file(tmp_uuid_and_uri):  # NOQA
         "dataset_readme_key_suffix": "README.yml",
         "manifest_key_suffix": "manifest.json",
         "admin_metadata_key_suffix": "dtool",
+        "http_manifest_key": "http_manifest.json",
     }
     actual_content = _get_data_structure_from_key(
         proto_dataset._storage_broker,

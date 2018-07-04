@@ -464,6 +464,9 @@ class S3StorageBroker(object):
         for identifier in manifest["items"]:
             self.make_key_public(self.data_key_prefix + identifier)
 
+        http_manifest = self.generate_http_manifest()
+        self.write_http_manifest(http_manifest)
+
         access_url = "https://{}.s3.amazonaws.com/{}".format(self.bucket, self.uuid)
 
         return access_url

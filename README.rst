@@ -1,10 +1,13 @@
 Add S3 support to dtool
 =======================
 
+.. image:: https://badge.fury.io/py/dtool-s3.svg
+   :target: http://badge.fury.io/py/dtool-s3
+   :alt: PyPi package
+
 - GitHub: https://github.com/jic-dtool/dtool-S3
 - PyPI: https://pypi.python.org/pypi/dtool-S3
 - Free software: MIT License
-
 
 Features
 --------
@@ -21,6 +24,22 @@ To install the dtool-S3 package.
 .. code-block:: bash
 
     pip install dtool-s3
+
+
+Configuration
+-------------
+
+Install the ``aws`` client, for details see
+`https://docs.aws.amazon.com/cli/latest/userguide/installing.html <https://docs.aws.amazon.com/cli/latest/userguide/installing.html>`_. In short::
+
+    pip install awscli --upgrade --user
+
+Configure the credentials using::
+
+    aws configure
+
+These are needed for the ``boto3`` library, for more details see
+`https://boto3.readthedocs.io/en/latest/guide/quickstart.html <https://boto3.readthedocs.io/en/latest/guide/quickstart.html>`_.
 
 
 Usage
@@ -76,5 +95,6 @@ Related packages
 
 - `dtoolcore <https://github.com/jic-dtool/dtoolcore>`_
 - `dtool-cli <https://github.com/jic-dtool/dtool-cli>`_
-- `dtool-symlink <https://github.com/jic-dtool/dtool-symlink>`_
-- `dtool-symlink <https://github.com/jic-dtool/dtool-irods>`_
+- `dtool-http <https://github.com/jic-dtool/dtool-http>`_
+- `dtool-azure <https://github.com/jic-dtool/dtool-azure>`_
+- `dtool-irods <https://github.com/jic-dtool/dtool-irods>`_

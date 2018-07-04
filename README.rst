@@ -19,9 +19,7 @@ Features
 Installation
 ------------
 
-To install the dtool-S3 package.
-
-.. code-block:: bash
+To install the dtool-S3 package::
 
     pip install dtool-s3
 
@@ -46,15 +44,11 @@ Usage
 -----
 
 To copy a dataset from local disk (``my-dataset``) to a S3 bucket
-(``/data_raw``) one can use the command below.
-
-.. code-block::
+(``/data_raw``) one can use the command below::
 
     dtool copy ./my-dataset s3://data_raw
 
-To list all the datasets in a S3 bucket one can use the command below.
-
-.. code-block::
+To list all the datasets in a S3 bucket one can use the command below::
 
     dtool ls s3://data_raw
 
@@ -70,18 +64,14 @@ cache directory is ``~/.cache/dtool/s3``.
 
 One may want to change this directory. For example, if working on a HPC cluster
 to set it to a directory that lives on fast solid state disk. This can be achieved
-by setting the ``DTOOL_S3_CACHE_DIRECTORY`` environment variable. For example
-
-.. code-block::
+by setting the ``DTOOL_S3_CACHE_DIRECTORY`` environment variable. For example::
 
     mkdir -p /tmp/dtool/s3
     export DTOOL_S3_CACHE_DIRECTORY=/tmp/dtool/s3
 
 Alternatively, when using the ``dtool`` command line interface one can add the
 ``DTOOL_S3_CACHE_DIRECTORY`` key to the ``~/.config/dtool/dtool.json`` file.
-For example,
-
-.. code-block:: json
+For example::
 
     {
        "DTOOL_S3_CACHE_DIRECTORY": "/tmp/dtool/s3"

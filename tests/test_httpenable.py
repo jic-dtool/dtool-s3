@@ -59,3 +59,13 @@ def test_http_enable(tmp_uuid_and_uri):  # NOQA
     assert access_url.startswith("https://")
 
     dataset_from_http = DataSet.from_uri(access_url)
+
+    from dtoolcore.compare import (
+        diff_identifiers,
+        diff_sizes,
+        diff_content
+    )
+
+    assert len(diff_identifiers(dataset, dataset_from_http)) == 0
+    assert len(diff_sizes(dataset, dataset_from_http)) == 0
+    assert len(diff_content(dataset_from_http, dataset)) == 0

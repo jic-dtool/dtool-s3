@@ -467,7 +467,10 @@ class S3StorageBroker(object):
         http_manifest = self.generate_http_manifest()
         self.write_http_manifest(http_manifest)
 
-        access_url = "https://{}.s3.amazonaws.com/{}".format(self.bucket, self.uuid)
+        access_url = "https://{}.s3.amazonaws.com/{}".format(
+            self.bucket,
+            self.uuid
+        )
 
         return access_url
 
@@ -484,7 +487,9 @@ class S3StorageBroker(object):
         manifest = self.get_manifest()
         item_urls = {}
         for identifier in manifest["items"]:
-            item_urls[identifier] = self.generate_key_url(self.data_key_prefix + identifier)
+            item_urls[identifier] = self.generate_key_url(
+                self.data_key_prefix + identifier
+            )
 
         http_manifest = {
             "admin_metadata": self.get_admin_metadata(),

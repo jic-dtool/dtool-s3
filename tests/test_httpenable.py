@@ -57,3 +57,5 @@ def test_http_enable(tmp_uuid_and_uri):  # NOQA
     access_url = dataset._storage_broker.http_enable()
 
     assert access_url.startswith("https://")
+
+    dataset_from_http = DataSet.from_uri(access_url)

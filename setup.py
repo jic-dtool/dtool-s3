@@ -14,8 +14,8 @@ setup(
     # Package will be released using Tjelvar's PyPi credentials.
     author="Tjelvar Olsson",
     author_email="tjelvar.olsson@jic.ac.uk",
-#   author="Matthew Hartley",
-#   author_email="matthew.hartley@jic.ac.uk",
+#   author="Matthew Hartley",  # NOQA
+#   author_email="matthew.hartley@jic.ac.uk",  # NOQA
     url=url,
     download_url="{}/tarball/{}".format(url, version),
     install_requires=[

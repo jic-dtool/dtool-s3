@@ -10,8 +10,6 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
-- Added ``http_enable`` method to the ``S3StorageBroker`` class,  to allow publishing of datasets
-
 
 Changed
 ^^^^^^^
@@ -31,6 +29,17 @@ Fixed
 
 Security
 ^^^^^^^^
+
+
+[0.2.0] - 2018-07-05
+--------------------
+
+Added
+^^^^^
+
+- Added ``http_enable`` method to the ``S3StorageBroker`` class,  to allow
+  publishing of datasets
+
 
 [0.1.1] - 2018-01-18
 --------------------

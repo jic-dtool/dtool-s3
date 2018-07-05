@@ -1,7 +1,7 @@
 from setuptools import setup
 
 url = "https://github.com/jic-dtool/dtool-s3"
-version = "0.1.1"
+version = "0.2.0"
 readme = open('README.rst').read()
 
 setup(

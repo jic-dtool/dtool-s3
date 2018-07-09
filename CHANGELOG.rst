@@ -26,11 +26,19 @@ Removed
 Fixed
 ^^^^^
 
-- Made download to DTOOL_S3_CACHE_DIRECTORY more robust
-
 
 Security
 ^^^^^^^^
+
+
+[0.3.0] - 2018-07-09
+--------------------
+
+Fixed
+^^^^^
+
+- Made download to DTOOL_S3_CACHE_DIRECTORY more robust
+
 
 
 [0.2.0] - 2018-07-05

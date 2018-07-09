@@ -257,10 +257,12 @@ class S3StorageBroker(object):
         )
         if not os.path.isfile(local_item_abspath):
 
+            tmp_local_item_abspath = local_item_abspath + ".tmp"
             self.s3resource.Bucket(self.bucket).download_file(
                 bucket_fpath,
-                local_item_abspath
+                tmp_local_item_abspath
             )
+            os.rename(tmp_local_item_abspath, local_item_abspath)
 
         return local_item_abspath
 

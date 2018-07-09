@@ -1,6 +1,9 @@
 
+from contextlib import contextmanager
 import os
 import json
+import shutil
+import tempfile
 
 import pytest
 
@@ -11,6 +14,20 @@ from dtool_s3.storagebroker import (
 
 _HERE = os.path.dirname(__file__)
 TEST_SAMPLE_DATA = os.path.join(_HERE, "data")
+
+
+@contextmanager
+def tmp_env_var(key, value):
+    os.environ[key] = value
+    yield
+    del os.environ[key]
+
+
+@contextmanager
+def tmp_directory():
+    d = tempfile.mkdtemp()
+    yield d
+    shutil.rmtree(d)
 
 
 def _key_exists_in_storage_broker(storage_broker, key):

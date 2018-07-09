@@ -9,6 +9,7 @@ from dtoolcore.filehasher import md5sum_hexdigest
 
 from . import tmp_uuid_and_uri  # NOQA
 from . import TEST_SAMPLE_DATA
+from . import tmp_directory, tmp_env_var
 
 
 def _prefix_contains_something(storage_broker, prefix):
@@ -271,3 +272,38 @@ def test_files_with_whitespace(tmp_uuid_and_uri):  # NOQA
     expected_identifier = generate_identifier('tiny with space.png')
     assert expected_identifier in dataset.identifiers
     assert len(dataset.identifiers) == 1
+
+
+def test_item_local_abspath_with_clean_cache(tmp_uuid_and_uri):
+
+    from dtoolcore import ProtoDataSet, generate_admin_metadata
+    from dtoolcore import DataSet
+    from dtoolcore.utils import generate_identifier
+
+    uuid, dest_uri = tmp_uuid_and_uri
+
+    name = "my_dataset"
+    admin_metadata = generate_admin_metadata(name)
+    admin_metadata["uuid"] = uuid
+
+    sample_data_path = os.path.join(TEST_SAMPLE_DATA)
+    local_file_path = os.path.join(sample_data_path, 'tiny.png')
+
+    # Create a minimal dataset
+    proto_dataset = ProtoDataSet(
+        uri=dest_uri,
+        admin_metadata=admin_metadata,
+        config_path=None)
+    proto_dataset.create()
+    proto_dataset.put_item(local_file_path, 'tiny.png')
+    proto_dataset.freeze()
+
+    identifier = generate_identifier('tiny.png')
+
+    with tmp_directory() as cache_dir:
+        with tmp_env_var("DTOOL_S3_CACHE_DIRECTORY", cache_dir):
+
+            dataset = DataSet.from_uri(dest_uri)
+            fpath = dataset.item_content_abspath(identifier)
+
+            assert os.path.isfile(fpath)

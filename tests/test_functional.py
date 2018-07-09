@@ -274,7 +274,7 @@ def test_files_with_whitespace(tmp_uuid_and_uri):  # NOQA
     assert len(dataset.identifiers) == 1
 
 
-def test_item_local_abspath_with_clean_cache(tmp_uuid_and_uri):
+def test_item_local_abspath_with_clean_cache(tmp_uuid_and_uri):  # NOQA
 
     from dtoolcore import ProtoDataSet, generate_admin_metadata
     from dtoolcore import DataSet

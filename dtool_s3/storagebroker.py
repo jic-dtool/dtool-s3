@@ -181,6 +181,9 @@ class S3StorageBroker(BaseStorageBroker):
     def get_readme_key(self):
         return self.dataset_readme_key
 
+    def get_overlay_key(self, overlay_name):
+        return os.path.join(self.overlays_key_prefix, overlay_name + '.json')
+
     def put_admin_metadata(self, admin_metadata):
 
         for k, v in admin_metadata.items():
@@ -211,23 +214,6 @@ class S3StorageBroker(BaseStorageBroker):
             return True
         except ClientError:
             return False
-
-    def put_overlay(self, overlay_name, overlay):
-        """Store the overlay by writing it to S3.
-
-        It is the client's responsibility to ensure that the overlay provided
-        is a dictionary with valid contents.
-
-        :param overlay_name: name of the overlay
-        :overlay: overlay dictionary
-        """
-        bucket_fpath = os.path.join(
-            self.overlays_key_prefix,
-            overlay_name + '.json'
-        )
-        self.s3resource.Object(self.bucket, bucket_fpath).put(
-            Body=json.dumps(overlay)
-        )
 
 #############################################################################
 # Methods only used by DataSet.
@@ -293,24 +279,6 @@ class S3StorageBroker(BaseStorageBroker):
             overlay_names.append(overlay_name)
 
         return overlay_names
-
-    def get_overlay(self, overlay_name):
-        """Return overlay as a dictionary.
-
-        :param overlay_name: name of the overlay
-        :returns: overlay as a dictionary
-        """
-
-        overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
-
-        response = self.s3resource.Object(
-            self.bucket,
-            overlay_fpath
-        ).get()
-
-        overlay_as_string = response['Body'].read().decode('utf-8')
-        return json.loads(overlay_as_string)
-
 
 #############################################################################
 # Methods only used by ProtoDataSet.

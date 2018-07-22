@@ -19,6 +19,8 @@ from dtoolcore.utils import (
 
 from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
 
+from dtoolcore.storagebroker import BaseStorageBroker
+
 
 # We update the dataset_registration_key when we have the UUID for the dataset
 _STRUCTURE_PARAMETERS = {
@@ -68,7 +70,7 @@ Per item descriptive metadata prefixed by: $UUID/overlays/
 """
 
 
-class S3StorageBroker(object):
+class S3StorageBroker(BaseStorageBroker):
 
     #: Attribute used to define the type of storage broker.
     key = "s3"
@@ -159,6 +161,8 @@ class S3StorageBroker(object):
         self.s3resource.Object(self.bucket, self.dtool_readme_key).put(
             Body=_DTOOL_README_TXT
         )
+
+    # Methods to override.
 
     def put_admin_metadata(self, admin_metadata):
 

@@ -164,6 +164,23 @@ class S3StorageBroker(BaseStorageBroker):
 
     # Methods to override.
 
+    def put_text(self, key, content):
+        self.s3resource.Object(self.bucket, key).put(
+            Body=content
+        )
+
+    def get_text(self, key):
+
+        response = self.s3resource.Object(
+            self.bucket,
+            key
+        ).get()
+
+        return response['Body'].read().decode('utf-8')
+
+    def get_readme_key(self):
+        return self.dataset_readme_key
+
     def put_admin_metadata(self, admin_metadata):
 
         for k, v in admin_metadata.items():
@@ -194,15 +211,6 @@ class S3StorageBroker(BaseStorageBroker):
             return True
         except ClientError:
             return False
-
-    def get_readme_content(self):
-
-        response = self.s3resource.Object(
-            self.bucket,
-            self.dataset_readme_key
-        ).get()
-
-        return response['Body'].read().decode('utf-8')
 
     def put_overlay(self, overlay_name, overlay):
         """Store the overlay by writing it to S3.
@@ -307,12 +315,6 @@ class S3StorageBroker(BaseStorageBroker):
 #############################################################################
 # Methods only used by ProtoDataSet.
 #############################################################################
-
-    def put_readme(self, content):
-
-        self.s3resource.Object(self.bucket, self.dataset_readme_key).put(
-            Body=content
-        )
 
     def put_item(self, fpath, relpath):
 

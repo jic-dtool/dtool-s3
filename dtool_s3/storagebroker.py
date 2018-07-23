@@ -194,6 +194,8 @@ class S3StorageBroker(BaseStorageBroker):
         for k, v in admin_metadata.items():
             admin_metadata[k] = str(v)
 
+# TODO: should we add the admin metadata to the file?
+# TODO: should the admin metadata live in the file?
         self.s3resource.Object(self.bucket, self.admin_metadata_key).put(
             Body='dtoolfile',
             Metadata=admin_metadata

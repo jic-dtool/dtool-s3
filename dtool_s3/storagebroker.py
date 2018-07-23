@@ -208,6 +208,30 @@ class S3StorageBroker(BaseStorageBroker):
 
         return response['Metadata']
 
+    def _get_item_object(self, handle):
+        identifier = generate_identifier(handle)
+        item_key = self.data_key_prefix + identifier
+        obj = self.s3resource.Object(self.bucket, item_key)
+        return obj
+
+    def get_size_in_bytes(self, handle):
+        obj = self._get_item_object(handle)
+        return int(obj.content_length)
+
+    def get_utc_timestamp(self, handle):
+        obj = self._get_item_object(handle)
+        return time.mktime(obj.last_modified.timetuple())
+
+    def get_hash(self, handle):
+        obj = self._get_item_object(handle)
+        checksum = obj.e_tag[1:-1]
+        return checksum
+
+# According to the tests the below is not needed.
+#   def get_relpath(self, handle):
+#       obj = self._get_item_object(handle)
+#       return obj.get()['Metadata']['handle']
+
     def has_admin_metadata(self):
         """Return True if the administrative metadata exists.
 
@@ -268,10 +292,6 @@ class S3StorageBroker(BaseStorageBroker):
 
         return overlay_names
 
-#############################################################################
-# Methods only used by ProtoDataSet.
-#############################################################################
-
     def put_item(self, fpath, relpath):
 
         fname = generate_identifier(relpath)
@@ -311,27 +331,6 @@ class S3StorageBroker(BaseStorageBroker):
             relpath = obj.get()['Metadata']['handle']
 
             yield relpath
-
-    def item_properties(self, handle):
-        """Return properties of the item with the given handle."""
-
-        identifier = generate_identifier(handle)
-        bucket_fpath = self.data_key_prefix + identifier
-        obj = self.s3resource.Object(self.bucket, bucket_fpath)
-
-        size = int(obj.content_length)
-        checksum = obj.e_tag[1:-1]
-        relpath = obj.get()['Metadata']['handle']
-        timestamp = time.mktime(obj.last_modified.timetuple())
-
-        properties = {
-            'hash': checksum,
-            'size_in_bytes': size,
-            'relpath': relpath,
-            'utc_timestamp': timestamp
-        }
-
-        return properties
 
     def pre_freeze_hook(self):
         pass

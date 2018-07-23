@@ -79,6 +79,8 @@ class S3StorageBroker(BaseStorageBroker):
     #: function name to the manifest.
     hasher = FileHasher(md5sum_hexdigest)
 
+    _dtool_readme_txt = _DTOOL_README_TXT
+
     def __init__(self, uri, config_path=None):
 
         parse_result = generous_parse_uri(uri)
@@ -89,6 +91,11 @@ class S3StorageBroker(BaseStorageBroker):
         self.uuid = uuid
         self.s3resource = boto3.resource('s3')
         self.s3client = boto3.client('s3')
+
+        self._structure_parameters = _STRUCTURE_PARAMETERS
+        self.dataset_registration_key = 'dtool-{}'.format(self.uuid)
+        self._structure_parameters["dataset_registration_key"] = self.dataset_registration_key  # NOQA
+
         self._set_prefixes()
 
         self._s3_cache_abspath = get_config_value(
@@ -146,23 +153,12 @@ class S3StorageBroker(BaseStorageBroker):
 
         return uri
 
-    def create_structure(self):
+    # Methods to override.
 
-        dataset_registration_key = 'dtool-{}'.format(self.uuid)
-        self.s3resource.Object(self.bucket, dataset_registration_key).put(
+    def _create_structure(self):
+        self.s3resource.Object(self.bucket, self.dataset_registration_key).put(
             Body=''
         )
-
-        # Write out self descriptive metadata.
-        _STRUCTURE_PARAMETERS["dataset_registration_key"] = dataset_registration_key  # NOQA
-        self.s3resource.Object(self.bucket, self.structure_key).put(
-            Body=json.dumps(_STRUCTURE_PARAMETERS)
-        )
-        self.s3resource.Object(self.bucket, self.dtool_readme_key).put(
-            Body=_DTOOL_README_TXT
-        )
-
-    # Methods to override.
 
     def put_text(self, key, content):
         self.s3resource.Object(self.bucket, key).put(
@@ -177,6 +173,12 @@ class S3StorageBroker(BaseStorageBroker):
         ).get()
 
         return response['Body'].read().decode('utf-8')
+
+    def get_structure_key(self):
+        return self.structure_key
+
+    def get_dtool_readme_key(self):
+        return self.dtool_readme_key
 
     def get_readme_key(self):
         return self.dataset_readme_key

@@ -184,6 +184,9 @@ class S3StorageBroker(BaseStorageBroker):
     def get_overlay_key(self, overlay_name):
         return os.path.join(self.overlays_key_prefix, overlay_name + '.json')
 
+    def get_manifest_key(self):
+        return self.manifest_key
+
     def put_admin_metadata(self, admin_metadata):
 
         for k, v in admin_metadata.items():
@@ -214,23 +217,6 @@ class S3StorageBroker(BaseStorageBroker):
             return True
         except ClientError:
             return False
-
-#############################################################################
-# Methods only used by DataSet.
-#############################################################################
-
-    def get_manifest(self):
-        """Return the manifest contents from S3.
-
-        :returns: manifest as a dictionary
-        """
-        response = self.s3resource.Object(
-            self.bucket,
-            self.manifest_key
-        ).get()
-
-        manifest_as_string = response['Body'].read().decode('utf-8')
-        return json.loads(manifest_as_string)
 
     def get_item_abspath(self, identifier):
         """Return absolute path at which item content can be accessed.
@@ -312,19 +298,6 @@ class S3StorageBroker(BaseStorageBroker):
 
         self.s3resource.Object(self.bucket, bucket_fpath).put(
             Body=json.dumps(value)
-        )
-
-    def put_manifest(self, manifest):
-        """Store the manifest by writing it to S3.
-
-        It is the client's responsibility to ensure that the manifest provided
-        is a dictionary with valid contents.
-
-        :param manifest: dictionary with manifest structural metadata
-        """
-
-        self.s3resource.Object(self.bucket, self.manifest_key).put(
-            Body=json.dumps(manifest)
         )
 
     def iter_item_handles(self):

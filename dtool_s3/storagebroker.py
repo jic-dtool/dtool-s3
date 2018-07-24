@@ -107,24 +107,30 @@ class S3StorageBroker(BaseStorageBroker):
             default=os.path.expanduser("~/.cache/dtool/s3")
         )
 
+    # Generic helper functions.
+
+    def _generate_key(self, structure_dict_key):
+        return self.uuid + '/' + self._structure_parameters[structure_dict_key]
+
+    def _generate_key_prefix(self, structure_dict_key):
+        return self._generate_key(structure_dict_key) + '/'
+
     def _set_prefixes(self):
 
-        def generate_key(structure_dict_key):
-            return self.uuid + '/' + _STRUCTURE_PARAMETERS[structure_dict_key]
 
-        def generate_key_prefix(structure_dict_key):
-            return generate_key(structure_dict_key) + '/'
+        self.data_key_prefix = self._generate_key_prefix("data_key_infix")
+        self.fragments_key_prefix = self._generate_key_prefix("fragment_key_infix")
+        self.overlays_key_prefix = self._generate_key_prefix("overlays_key_infix")
 
-        self.data_key_prefix = generate_key_prefix("data_key_infix")
-        self.fragments_key_prefix = generate_key_prefix("fragment_key_infix")
-        self.overlays_key_prefix = generate_key_prefix("overlays_key_infix")
+        self.admin_metadata_key = self._generate_key("admin_metadata_key_suffix")
+        self.dtool_readme_key = self._generate_key("dtool_readme_key_suffix")
+        self.dataset_readme_key = self._generate_key("dataset_readme_key_suffix")
+        self.manifest_key = self._generate_key("manifest_key_suffix")
+        self.structure_key = self._generate_key("structure_key_suffix")
+        self.http_manifest_key = self._generate_key("http_manifest_key")
 
-        self.admin_metadata_key = generate_key("admin_metadata_key_suffix")
-        self.dtool_readme_key = generate_key("dtool_readme_key_suffix")
-        self.dataset_readme_key = generate_key("dataset_readme_key_suffix")
-        self.manifest_key = generate_key("manifest_key_suffix")
-        self.structure_key = generate_key("structure_key_suffix")
-        self.http_manifest_key = generate_key("http_manifest_key")
+
+    # Class methods to override.
 
     @classmethod
     def list_dataset_uris(cls, base_uri, config_path):

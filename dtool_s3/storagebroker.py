@@ -122,7 +122,6 @@ class S3StorageBroker(BaseStorageBroker):
         self.fragments_key_prefix = self._generate_key_prefix("fragment_key_infix")
         self.overlays_key_prefix = self._generate_key_prefix("overlays_key_infix")
 
-        self.admin_metadata_key = self._generate_key("admin_metadata_key_suffix")
         self.dtool_readme_key = self._generate_key("dtool_readme_key_suffix")
         self.dataset_readme_key = self._generate_key("dataset_readme_key_suffix")
         self.manifest_key = self._generate_key("manifest_key_suffix")
@@ -198,13 +197,16 @@ class S3StorageBroker(BaseStorageBroker):
     def get_manifest_key(self):
         return self.manifest_key
 
+    def get_admin_metadata_key(self):
+        return self._generate_key("admin_metadata_key_suffix")
+
     def put_admin_metadata(self, admin_metadata):
 
         str_admin_metadata = {}
         for k, v in admin_metadata.items():
             str_admin_metadata[k] = str(v)
 
-        self.s3resource.Object(self.bucket, self.admin_metadata_key).put(
+        self.s3resource.Object(self.bucket, self.get_admin_metadata_key()).put(
             Body=json.dumps(admin_metadata),
             Metadata=str_admin_metadata
         )
@@ -213,7 +215,7 @@ class S3StorageBroker(BaseStorageBroker):
 
         response = self.s3resource.Object(
             self.bucket,
-            self.admin_metadata_key
+            self.get_admin_metadata_key()
         ).get()
 
         return response['Metadata']

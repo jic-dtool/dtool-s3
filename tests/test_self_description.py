@@ -10,6 +10,7 @@ from . import (
 
 def test_writing_of_dtool_structure_file(tmp_uuid_and_uri):  # NOQA
     from dtoolcore import ProtoDataSet, generate_admin_metadata
+    from dtool_s3 import __version__
 
     # Create a proto dataset.
     uuid, dest_uri = tmp_uuid_and_uri
@@ -41,6 +42,7 @@ def test_writing_of_dtool_structure_file(tmp_uuid_and_uri):  # NOQA
         "manifest_key_suffix": "manifest.json",
         "admin_metadata_key_suffix": "dtool",
         "http_manifest_key": "http_manifest.json",
+        "storage_broker_version": __version__,
     }
     actual_content = _get_data_structure_from_key(
         proto_dataset._storage_broker,

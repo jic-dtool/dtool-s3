@@ -21,6 +21,8 @@ from dtoolcore.filehasher import FileHasher, md5sum_hexdigest
 
 from dtoolcore.storagebroker import BaseStorageBroker
 
+from dtool_s3 import __version__
+
 
 # We update the dataset_registration_key when we have the UUID for the dataset
 _STRUCTURE_PARAMETERS = {
@@ -33,7 +35,8 @@ _STRUCTURE_PARAMETERS = {
     "dataset_readme_key_suffix": "README.yml",
     "manifest_key_suffix": "manifest.json",
     "admin_metadata_key_suffix": "dtool",
-    "http_manifest_key": "http_manifest.json"
+    "http_manifest_key": "http_manifest.json",
+    "storage_broker_version": __version__,
 }
 
 _DTOOL_README_TXT = """README

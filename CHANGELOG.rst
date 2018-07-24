@@ -11,6 +11,19 @@ Added
 ^^^^^
 
 - Add writing of admin_metadata as content of admin_metadata_key
+- Added ``storage_broker_version`` to structure parameters
+- Added inheritance from ``dtoolcore.storagebroker.BaseStorageClass``
+- Overrode ``get_text`` method on ``BaseStorageBroker`` class
+- Overrode ``put_text`` method on ``BaseStorageBroker`` class
+- Overrode ``get_admin_metadata_key`` method on ``BaseStorageBroker`` class
+- Overrode ``get_readme_key`` method on ``BaseStorageBroker`` class
+- Overrode ``get_manifest_key`` method on ``BaseStorageBroker`` class
+- Overrode ``get_overlay_key`` method on ``BaseStorageBroker`` class
+- Overrode ``get_structure_key`` method on ``BaseStorageBroker`` class
+- Overrode ``get_dtool_readme_key`` method on ``BaseStorageBroker`` class
+- Overrode ``get_size_in_bytes`` method on ``BaseStorageBroker`` class
+- Overrode ``get_utc_timestamp`` method on ``BaseStorageBroker`` class
+- Overrode ``get_hash`` method on ``BaseStorageBroker`` class
 
 
 Changed

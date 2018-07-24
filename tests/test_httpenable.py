@@ -12,7 +12,7 @@ def test_http_manifest():
 
     dataset = DataSet.from_uri(uri)
 
-    http_manifest = dataset._storage_broker.generate_http_manifest()
+    http_manifest = dataset._storage_broker._generate_http_manifest()
 
     assert "admin_metadata" in http_manifest
     assert http_manifest["admin_metadata"] == dataset._admin_metadata
@@ -25,7 +25,7 @@ def test_http_manifest():
     assert "item_urls" in http_manifest
     assert set(http_manifest["item_urls"].keys()) == set(dataset.identifiers)
 
-    dataset._storage_broker.write_http_manifest(http_manifest)
+    dataset._storage_broker._write_http_manifest(http_manifest)
 
 
 def test_http_enable(tmp_uuid_and_uri):  # NOQA

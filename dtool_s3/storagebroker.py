@@ -99,7 +99,11 @@ class S3StorageBroker(BaseStorageBroker):
         self.dataset_registration_key = 'dtool-{}'.format(self.uuid)
         self._structure_parameters["dataset_registration_key"] = self.dataset_registration_key  # NOQA
 
-        self._set_prefixes()
+        self.data_key_prefix = self._generate_key_prefix("data_key_infix")
+        self.fragments_key_prefix = self._generate_key_prefix("fragment_key_infix")
+        self.overlays_key_prefix = self._generate_key_prefix("overlays_key_infix")
+
+        self.http_manifest_key = self._generate_key("http_manifest_key")
 
         self._s3_cache_abspath = get_config_value(
             "DTOOL_S3_CACHE_DIRECTORY",
@@ -115,18 +119,50 @@ class S3StorageBroker(BaseStorageBroker):
     def _generate_key_prefix(self, structure_dict_key):
         return self._generate_key(structure_dict_key) + '/'
 
-    def _set_prefixes(self):
+    def _get_item_object(self, handle):
+        identifier = generate_identifier(handle)
+        item_key = self.data_key_prefix + identifier
+        obj = self.s3resource.Object(self.bucket, item_key)
+        return obj
 
+    def _make_key_public(self, key):
+        acl = self.s3resource.ObjectAcl(self.bucket, key)
+        acl.put(ACL='public-read')
 
-        self.data_key_prefix = self._generate_key_prefix("data_key_infix")
-        self.fragments_key_prefix = self._generate_key_prefix("fragment_key_infix")
-        self.overlays_key_prefix = self._generate_key_prefix("overlays_key_infix")
+    def _generate_http_manifest(self):
 
-        self.dtool_readme_key = self._generate_key("dtool_readme_key_suffix")
-        self.dataset_readme_key = self._generate_key("dataset_readme_key_suffix")
-        self.manifest_key = self._generate_key("manifest_key_suffix")
-        self.structure_key = self._generate_key("structure_key_suffix")
-        self.http_manifest_key = self._generate_key("http_manifest_key")
+        readme_url = self.generate_key_url(self.get_readme_key())
+        manifest_url = self.generate_key_url(self.get_manifest_key())
+
+        overlays = {}
+        for overlay_name in self.list_overlay_names():
+            overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
+            overlays[overlay_name] = self.generate_key_url(overlay_fpath)
+
+        manifest = self.get_manifest()
+        item_urls = {}
+        for identifier in manifest["items"]:
+            item_urls[identifier] = self.generate_key_url(
+                self.data_key_prefix + identifier
+            )
+
+        http_manifest = {
+            "admin_metadata": self.get_admin_metadata(),
+            "item_urls": item_urls,
+            "overlays": overlays,
+            "readme_url": readme_url,
+            "manifest_url": manifest_url
+        }
+
+        return http_manifest
+
+    def _write_http_manifest(self, http_manifest):
+
+        self.s3resource.Object(self.bucket, self.http_manifest_key).put(
+            Body=json.dumps(http_manifest)
+        )
+
+        self._make_key_public(self.http_manifest_key)
 
 
     # Class methods to override.
@@ -183,19 +219,19 @@ class S3StorageBroker(BaseStorageBroker):
         return response['Body'].read().decode('utf-8')
 
     def get_structure_key(self):
-        return self.structure_key
+        return self._generate_key("structure_key_suffix")
 
     def get_dtool_readme_key(self):
-        return self.dtool_readme_key
+        return self._generate_key("dtool_readme_key_suffix")
 
     def get_readme_key(self):
-        return self.dataset_readme_key
+        return self._generate_key("dataset_readme_key_suffix")
 
     def get_overlay_key(self, overlay_name):
         return os.path.join(self.overlays_key_prefix, overlay_name + '.json')
 
     def get_manifest_key(self):
-        return self.manifest_key
+        return self._generate_key("manifest_key_suffix")
 
     def get_admin_metadata_key(self):
         return self._generate_key("admin_metadata_key_suffix")
@@ -219,12 +255,6 @@ class S3StorageBroker(BaseStorageBroker):
         ).get()
 
         return response['Metadata']
-
-    def _get_item_object(self, handle):
-        identifier = generate_identifier(handle)
-        item_key = self.data_key_prefix + identifier
-        obj = self.s3resource.Object(self.bucket, item_key)
-        return obj
 
     def get_size_in_bytes(self, handle):
         obj = self._get_item_object(handle)
@@ -409,25 +439,21 @@ class S3StorageBroker(BaseStorageBroker):
 
         return url
 
-    def make_key_public(self, key):
-        acl = self.s3resource.ObjectAcl(self.bucket, key)
-        acl.put(ACL='public-read')
-
     def http_enable(self):
 
-        self.make_key_public(self.dataset_readme_key)
-        self.make_key_public(self.manifest_key)
+        self._make_key_public(self.get_readme_key())
+        self._make_key_public(self.get_manifest_key())
 
         for overlay_name in self.list_overlay_names():
             overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
-            self.make_key_public(overlay_fpath)
+            self._make_key_public(overlay_fpath)
 
         manifest = self.get_manifest()
         for identifier in manifest["items"]:
-            self.make_key_public(self.data_key_prefix + identifier)
+            self._make_key_public(self.data_key_prefix + identifier)
 
-        http_manifest = self.generate_http_manifest()
-        self.write_http_manifest(http_manifest)
+        http_manifest = self._generate_http_manifest()
+        self._write_http_manifest(http_manifest)
 
         access_url = "https://{}.s3.amazonaws.com/{}".format(
             self.bucket,
@@ -435,38 +461,3 @@ class S3StorageBroker(BaseStorageBroker):
         )
 
         return access_url
-
-    def generate_http_manifest(self):
-
-        readme_url = self.generate_key_url(self.dataset_readme_key)
-        manifest_url = self.generate_key_url(self.manifest_key)
-
-        overlays = {}
-        for overlay_name in self.list_overlay_names():
-            overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
-            overlays[overlay_name] = self.generate_key_url(overlay_fpath)
-
-        manifest = self.get_manifest()
-        item_urls = {}
-        for identifier in manifest["items"]:
-            item_urls[identifier] = self.generate_key_url(
-                self.data_key_prefix + identifier
-            )
-
-        http_manifest = {
-            "admin_metadata": self.get_admin_metadata(),
-            "item_urls": item_urls,
-            "overlays": overlays,
-            "readme_url": readme_url,
-            "manifest_url": manifest_url
-        }
-
-        return http_manifest
-
-    def write_http_manifest(self, http_manifest):
-
-        self.s3resource.Object(self.bucket, self.http_manifest_key).put(
-            Body=json.dumps(http_manifest)
-        )
-
-        self.make_key_public(self.http_manifest_key)

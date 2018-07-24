@@ -10,6 +10,8 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
+- Add writing of admin_metadata as content of admin_metadata_key
+
 
 Changed
 ^^^^^^^

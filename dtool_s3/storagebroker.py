@@ -100,8 +100,12 @@ class S3StorageBroker(BaseStorageBroker):
         self._structure_parameters["dataset_registration_key"] = self.dataset_registration_key  # NOQA
 
         self.data_key_prefix = self._generate_key_prefix("data_key_infix")
-        self.fragments_key_prefix = self._generate_key_prefix("fragment_key_infix")
-        self.overlays_key_prefix = self._generate_key_prefix("overlays_key_infix")
+        self.fragments_key_prefix = self._generate_key_prefix(
+            "fragment_key_infix"
+        )
+        self.overlays_key_prefix = self._generate_key_prefix(
+            "overlays_key_infix"
+        )
 
         self.http_manifest_key = self._generate_key("http_manifest_key")
 
@@ -163,7 +167,6 @@ class S3StorageBroker(BaseStorageBroker):
         )
 
         self._make_key_public(self.http_manifest_key)
-
 
     # Class methods to override.
 

@@ -461,3 +461,15 @@ class S3StorageBroker(BaseStorageBroker):
         )
 
         return access_url
+
+    def _list_historical_readme_keys(self):
+        # This method is used to test the
+        # BaseStorageBroker.readme_update method.
+        prefix = self.get_readme_key() + "-"
+        historical_readme_keys = []
+
+        bucket = boto3.resource('s3').Bucket(self.bucket)
+        for obj in bucket.objects.filter(Prefix=prefix).all():
+            historical_readme_keys.append(obj.key)
+
+        return historical_readme_keys

@@ -268,10 +268,11 @@ class S3StorageBroker(BaseStorageBroker):
         return time.mktime(obj.last_modified.timetuple())
 
     def get_hash(self, handle):
-        # Here the MD5 checksum is accessed from the metadata uploaded with #
-        # the item. This is needed as the AWS etag is # not the md5 sum of the
-        # uploaded object for items that are uploaded # using multipart uploads
-        # (large files).
+
+        # Here the calculated MD5 checksum is retrieved from the
+        # metadata. This is needed as the AWS etag is
+        # not the md5 sum of the uploaded object for items that are uploaded
+        # using multipart uploads (large files).
         # See: https://stackoverflow.com/a/43067788
         obj = self._get_item_object(handle)
         return obj.get()['Metadata']['checksum']

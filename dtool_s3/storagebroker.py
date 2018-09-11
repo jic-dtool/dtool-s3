@@ -268,9 +268,13 @@ class S3StorageBroker(BaseStorageBroker):
         return time.mktime(obj.last_modified.timetuple())
 
     def get_hash(self, handle):
+        # Here the MD5 checksum is accessed from the metadata uploaded with #
+        # the item. This is needed as the AWS etag is # not the md5 sum of the
+        # uploaded object for items that are uploaded # using multipart uploads
+        # (large files).
+        # See: https://stackoverflow.com/a/43067788
         obj = self._get_item_object(handle)
-        checksum = obj.e_tag[1:-1]
-        return checksum
+        return obj.get()['Metadata']['checksum']
 
 # According to the tests the below is not needed.
 #   def get_relpath(self, handle):
@@ -339,13 +343,24 @@ class S3StorageBroker(BaseStorageBroker):
 
     def put_item(self, fpath, relpath):
 
+        # Here the MD5 checksum is calculated so that it can be uploaded with
+        # the item as a piece of metadata. This is needed as the AWS etag is
+        # not the md5 sum of the uploaded object for items that are uploaded
+        # using multipart uploads (large files).
+        # See: https://stackoverflow.com/a/43067788
+        checksum = S3StorageBroker.hasher(fpath)
+
         fname = generate_identifier(relpath)
         dest_path = self.data_key_prefix + fname
         self.s3client.upload_file(
             fpath,
             self.bucket,
             dest_path,
-            ExtraArgs={'Metadata': {'handle': relpath}}
+            ExtraArgs={'Metadata': {
+                'handle': relpath,
+                'checksum': checksum,
+                }
+            }
         )
 
         return relpath

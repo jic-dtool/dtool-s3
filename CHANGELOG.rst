@@ -26,11 +26,21 @@ Removed
 Fixed
 ^^^^^
 
-- Fixed defect where multipart upload files did not have the md5sum in the manifest
-
 
 Security
 ^^^^^^^^
+
+
+[0.4.1] - 2018-09-11
+--------------------
+
+Fixed
+^^^^^
+
+- Fixed defect where multipart upload files did not have the md5sum in the
+  manifest
+
+
 
 [0.4.0] - 2018-07-24
 --------------------

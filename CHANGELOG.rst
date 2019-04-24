@@ -14,6 +14,9 @@ Added
 Changed
 ^^^^^^^
 
+- Cache environment variable changed from DTOOL_S3_CACHE_DIRECTORY to DTOOL_CACHE_DIRECTORY
+- Default cache directory changed from ``~/.cache/dtool/s3`` to ``~/.cache/dtool``
+
 
 Deprecated
 ^^^^^^^^^^

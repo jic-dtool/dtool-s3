@@ -55,31 +55,6 @@ To list all the datasets in a S3 bucket one can use the command below::
 See the `dtool documentation <http://dtool.readthedocs.io>`_ for more detail.
 
 
-Configuring the local dtool S3 cache
-------------------------------------
-
-When fetching items from a dataset, for example using the ``dtool item fetch``
-command, the content of the item is cached in a file on local disk. The default
-cache directory is ``~/.cache/dtool/s3``.
-
-One may want to change this directory. For example, if working on a HPC cluster
-to set it to a directory that lives on fast solid state disk. This can be achieved
-by setting the ``DTOOL_S3_CACHE_DIRECTORY`` environment variable. For example::
-
-    mkdir -p /tmp/dtool/s3
-    export DTOOL_S3_CACHE_DIRECTORY=/tmp/dtool/s3
-
-Alternatively, when using the ``dtool`` command line interface one can add the
-``DTOOL_S3_CACHE_DIRECTORY`` key to the ``~/.config/dtool/dtool.json`` file.
-For example::
-
-    {
-       "DTOOL_S3_CACHE_DIRECTORY": "/tmp/dtool/s3"
-    }
-
-If the file does not exist one may need to create it.
-
-
 Related packages
 ----------------
 

@@ -10,9 +10,6 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
-- Added debug logging
-- Added optimisation to improve speed when copying data from S3 object storage
-
 
 Changed
 ^^^^^^^
@@ -32,6 +29,16 @@ Fixed
 
 Security
 ^^^^^^^^
+
+[0.6.0] - 2019-07-12
+--------------------
+
+Added
+^^^^^
+
+- Added debug logging
+- Added optimisation to improve speed when copying data from S3 object storage
+
 
 [0.5.0] - 2019-04-25
 --------------------

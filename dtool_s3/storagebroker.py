@@ -314,7 +314,10 @@ class S3StorageBroker(BaseStorageBroker):
         """
         logger.debug("Get item abspath {} {}".format(identifier, self))
 
-        admin_metadata = self.get_admin_metadata()
+        if not hasattr(self, "_admin_metadata_cache"):
+            self._admin_metadata_cache = self.get_admin_metadata()
+        admin_metadata = self._admin_metadata_cache
+
         uuid = admin_metadata["uuid"]
         # Create directory for the specific dataset.
         dataset_cache_abspath = os.path.join(self._s3_cache_abspath, uuid)

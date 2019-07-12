@@ -11,6 +11,7 @@ Added
 ^^^^^
 
 - Added debug logging
+- Added optimisation to improve speed when copying data from S3 object storage
 
 
 Changed

@@ -1,5 +1,6 @@
-import os
 import json
+import logging
+import os
 import time
 
 try:
@@ -24,6 +25,8 @@ from dtoolcore.storagebroker import BaseStorageBroker
 
 from dtool_s3 import __version__
 
+
+logger = logging.getLogger(__name__)
 
 # We update the dataset_registration_key when we have the UUID for the dataset
 _STRUCTURE_PARAMETERS = {
@@ -209,11 +212,13 @@ class S3StorageBroker(BaseStorageBroker):
         )
 
     def put_text(self, key, content):
+        logger.debug("Put text {}".format(self))
         self.s3resource.Object(self.bucket, key).put(
             Body=content
         )
 
     def get_text(self, key):
+        logger.debug("Get text {}".format(self))
 
         response = self.s3resource.Object(
             self.bucket,
@@ -241,6 +246,7 @@ class S3StorageBroker(BaseStorageBroker):
         return self._generate_key("admin_metadata_key_suffix")
 
     def put_admin_metadata(self, admin_metadata):
+        logger.debug("Put admin metdata {}".format(self))
 
         str_admin_metadata = {}
         for k, v in admin_metadata.items():
@@ -252,6 +258,7 @@ class S3StorageBroker(BaseStorageBroker):
         )
 
     def get_admin_metadata(self):
+        logger.debug("Get admin metdata {}".format(self))
 
         response = self.s3resource.Object(
             self.bucket,
@@ -261,14 +268,17 @@ class S3StorageBroker(BaseStorageBroker):
         return response['Metadata']
 
     def get_size_in_bytes(self, handle):
+        logger.debug("Get size in bytes {}".format(self))
         obj = self._get_item_object(handle)
         return int(obj.content_length)
 
     def get_utc_timestamp(self, handle):
+        logger.debug("Get utc timestamp {}".format(self))
         obj = self._get_item_object(handle)
         return time.mktime(obj.last_modified.timetuple())
 
     def get_hash(self, handle):
+        logger.debug("Get hash {}".format(self))
 
         # Here the calculated MD5 checksum is retrieved from the
         # metadata. This is needed as the AWS etag is
@@ -288,6 +298,7 @@ class S3StorageBroker(BaseStorageBroker):
 
         This is the definition of being a "dataset".
         """
+        logger.debug("Has admin metadata {}".format(self))
 
         try:
             self.get_admin_metadata()
@@ -301,6 +312,8 @@ class S3StorageBroker(BaseStorageBroker):
         :param identifier: item identifier
         :returns: absolute path from which the item content can be accessed
         """
+        logger.debug("Get item abspath {} {}".format(identifier, self))
+
         admin_metadata = self.get_admin_metadata()
         uuid = admin_metadata["uuid"]
         # Create directory for the specific dataset.
@@ -329,6 +342,7 @@ class S3StorageBroker(BaseStorageBroker):
 
     def list_overlay_names(self):
         """Return list of overlay names."""
+        logger.debug("List overlay names {}".format(self))
 
         bucket = self.s3resource.Bucket(self.bucket)
 
@@ -344,6 +358,7 @@ class S3StorageBroker(BaseStorageBroker):
         return overlay_names
 
     def put_item(self, fpath, relpath):
+        logger.debug("Put item {}".format(self))
 
         # Here the MD5 checksum is calculated so that it can be uploaded with
         # the item as a piece of metadata. This is needed as the AWS etag is
@@ -375,6 +390,7 @@ class S3StorageBroker(BaseStorageBroker):
         :param key: metadata key
         :param value: metadata value
         """
+        logger.debug("Add item metadata {}".format(self))
 
         identifier = generate_identifier(handle)
         suffix = '{}.{}.json'.format(identifier, key)
@@ -386,6 +402,7 @@ class S3StorageBroker(BaseStorageBroker):
 
     def iter_item_handles(self):
         """Return iterator over item handles."""
+        logger.debug("Iter item handles {}".format(self))
 
         bucket = self.s3resource.Bucket(self.bucket)
 
@@ -398,6 +415,7 @@ class S3StorageBroker(BaseStorageBroker):
         pass
 
     def post_freeze_hook(self):
+        logger.debug("Post freeze hook {}".format(self))
 
         # Delete the temporary fragment metadata objects from the bucket.
 
@@ -431,6 +449,7 @@ class S3StorageBroker(BaseStorageBroker):
                        frozen
         :returns: dictionary containing item metadata
         """
+        logger.debug("Get item metadata {}".format(self))
 
         bucket = self.s3resource.Bucket(self.bucket)
 
@@ -460,6 +479,7 @@ class S3StorageBroker(BaseStorageBroker):
         return url
 
     def http_enable(self):
+        logger.debug("HTTP enable {}".format(self))
 
         self._make_key_public(self.get_readme_key())
         self._make_key_public(self.get_manifest_key())

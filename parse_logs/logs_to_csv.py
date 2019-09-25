@@ -83,7 +83,7 @@ class ItemData(object):
             "md5_minutes",
             "upload_minutes",
             "num_retries",
-        ]
+        ])
         click.echo(header)
 
     def echo_csv(self):

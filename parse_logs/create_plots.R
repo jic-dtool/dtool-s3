@@ -38,3 +38,13 @@ plot(
     ylab="Minutes"
 )
 dev.off()
+
+png("num_retries_vs_size_in_bytes.png")
+plot(
+    data$size_in_bytes,
+    data$num_retries,
+    main="Relation between size and number of retries",
+    xlab="Size in bytes",
+    ylab="Num retries"
+)
+dev.off()

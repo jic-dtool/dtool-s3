@@ -77,6 +77,30 @@ Per item descriptive metadata prefixed by: $UUID/overlays/
 """
 
 
+# Helper functions
+
+def _get_object(bucket, dest_path):
+    """Return object from bucket."""
+
+
+def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
+    """Upload file to S3 bucket."""
+
+
+def _put_item_with_retry(
+    s3client,
+    fpath,
+    bucket,
+    dest_path,
+    extra_args,
+    num_retry
+):
+    """Robust putting of item into s3 bucket."""
+    success = _upload_file(s3client, fpath, bucket, dest_path, extra_args)
+    if not success:
+        obj = _get_object(bucket, dest_path)  # NOQA
+
+
 class S3StorageBroker(BaseStorageBroker):
 
     #: Attribute used to define the type of storage broker.

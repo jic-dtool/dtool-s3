@@ -101,6 +101,16 @@ def _put_item_with_retry(
     success = _upload_file(s3client, fpath, bucket, dest_path, extra_args)
     if not success:
         obj = _get_object(bucket, dest_path)  # NOQA
+        if obj is None:
+            if not num_retry <= 0:
+                _put_item_with_retry(
+                    s3client,
+                    fpath,
+                    bucket,
+                    dest_path,
+                    extra_args,
+                    num_retry - 1
+                )
 
 
 class S3StorageBroker(BaseStorageBroker):

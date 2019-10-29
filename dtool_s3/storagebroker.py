@@ -86,6 +86,21 @@ def _get_object(bucket, dest_path):
 def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
     """Upload file to S3 bucket."""
 
+    try:
+        s3client.upload_file(
+            fpath,
+            bucket,
+            dest_path,
+            ExtraArgs=extra_args
+        )
+
+    except s3client.exceptions.NoSuchUpload:
+        # The NoSuchUpload error generally occurs when the expected HTTP 200 isn't recieved from the MultipartUplaod Complete request
+        logger.debug("NoSuchUpload caught")
+        return False
+
+    return True
+
 
 def _put_item_with_retry(
     s3client,

@@ -1,5 +1,9 @@
 """Test the more robust put_item logic."""
 
+import os
+
+from . import tmp_dir_fixture  # NOQA
+
 try:
     from unittest.mock import MagicMock
 except ImportError:
@@ -10,8 +14,50 @@ def test_get_object():
     from dtool_s3.storagebroker import _get_object  # NOQA
 
 
-def test_upload_file():
+def test_upload_file_simulating_successful_upload():
     from dtool_s3.storagebroker import _upload_file  # NOQA
+
+    # Mock scenario where upload succeeds without need for retry.
+    s3client = MagicMock()
+    s3client.upload_file = MagicMock(return_value=True)
+
+    value = _upload_file(
+            s3client,
+            "dummy_fpath",
+            "dummy_bucket",
+            "dummy_dest_path",
+            "dummy_extra_args"
+    )
+
+    assert value is True
+
+
+def test_upload_file_simulating_nosuchupload_failure(tmp_dir_fixture):  # NOQA
+    from dtool_s3.storagebroker import _upload_file  # NOQA
+    import boto3
+    from botocore.stub import Stubber
+
+    s3client = boto3.client('s3')
+
+    fpath = os.path.join(tmp_dir_fixture, "dummy.txt")
+    with open(fpath, "w") as fh:
+        fh.write("hello")
+
+    with Stubber(s3client) as stubber:
+        stubber.add_client_error(
+            method='upload_file',
+            service_error_code='NoSuchUpload',
+            http_status_code=404
+        )
+        value = _upload_file(
+            s3client,
+            fpath,
+            "dummy_bucket",
+            "dummy_dest_path",
+            extra_args={}
+        )
+
+    assert value is False
 
 
 def test_put_item_with_retry():

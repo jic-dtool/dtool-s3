@@ -37,10 +37,10 @@ def test_put_item_with_retry_immediate_success():
     dtool_s3.storagebroker._get_object.assert_not_called()
 
 
-def test_put_item_with_retry_simulating_ambigious_multipart_upload_error():
+def test_put_item_with_retry_simulating_upload_error_item_uploaded():
     import dtool_s3.storagebroker
 
-    # Mock scenario where upload fails, and retruns ambigious faile
+    # Mock scenario where upload fails, and retruns ambigious failure
     # MultipartUploadError, but item has been created in the bucket.
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
     dtool_s3.storagebroker._get_object = MagicMock(return_value=True)
@@ -56,3 +56,26 @@ def test_put_item_with_retry_simulating_ambigious_multipart_upload_error():
 
     dtool_s3.storagebroker._upload_file.assert_called_once()
     dtool_s3.storagebroker._get_object.assert_called_once()
+
+
+def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
+    import dtool_s3.storagebroker
+
+    retry_count = 4
+
+    # Mock scenario where upload fails, and retruns ambigious failure
+    # MultipartUploadError, but item has been created in the bucket.
+    dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
+    dtool_s3.storagebroker._get_object = MagicMock(return_value=None)
+
+    dtool_s3.storagebroker._put_item_with_retry(
+        "dummy_s3client",
+        "dummy_fpath",
+        "dummy_bucket",
+        "dummy_dest_path",
+        {},
+        retry_count
+    )
+
+    assert dtool_s3.storagebroker._upload_file.call_count == retry_count + 1
+    assert dtool_s3.storagebroker._get_object.call_count == retry_count + 1

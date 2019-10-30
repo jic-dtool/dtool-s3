@@ -10,6 +10,8 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
+- Added support for dataset key/value annotations
+
 
 Changed
 ^^^^^^^

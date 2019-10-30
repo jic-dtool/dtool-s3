@@ -54,11 +54,17 @@ def test_http_enable(tmp_uuid_and_uri):  # NOQA
 
     dataset = DataSet.from_uri(dest_uri)
 
+    # Add an annotation.
+    dataset.put_annotation("project", "dtool-testing")
+
     access_url = dataset._storage_broker.http_enable()
 
     assert access_url.startswith("https://")
 
     dataset_from_http = DataSet.from_uri(access_url)
+
+    # Assert that the annotation has been copied across.
+    assert dataset_from_http.get_annotation("project") == "dtool-testing"
 
     from dtoolcore.compare import (
         diff_identifiers,

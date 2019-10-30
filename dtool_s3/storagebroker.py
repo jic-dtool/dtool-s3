@@ -152,6 +152,11 @@ class S3StorageBroker(BaseStorageBroker):
             overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
             overlays[overlay_name] = self.generate_key_url(overlay_fpath)
 
+        annotations = {}
+        for ann_name in self.list_annotation_names():
+            ann_fpath = self.annotations_key_prefix + ann_name + '.json'
+            annotations[ann_name] = self.generate_key_url(ann_fpath)
+
         manifest = self.get_manifest()
         item_urls = {}
         for identifier in manifest["items"]:
@@ -163,6 +168,7 @@ class S3StorageBroker(BaseStorageBroker):
             "admin_metadata": self.get_admin_metadata(),
             "item_urls": item_urls,
             "overlays": overlays,
+            "annotations": annotations,
             "readme_url": readme_url,
             "manifest_url": manifest_url
         }
@@ -518,6 +524,10 @@ class S3StorageBroker(BaseStorageBroker):
         for overlay_name in self.list_overlay_names():
             overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
             self._make_key_public(overlay_fpath)
+
+        for ann_name in self.list_annotation_names():
+            ann_fpath = self.annotations_key_prefix + ann_name + '.json'
+            self._make_key_public(ann_fpath)
 
         manifest = self.get_manifest()
         for identifier in manifest["items"]:

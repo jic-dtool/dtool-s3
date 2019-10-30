@@ -34,6 +34,7 @@ _STRUCTURE_PARAMETERS = {
     "data_key_infix": "data",
     "fragment_key_infix": "fragments",
     "overlays_key_infix": "overlays",
+    "annotations_key_infix": "annotations",
     "structure_key_suffix": "structure.json",
     "dtool_readme_key_suffix": "README.txt",
     "dataset_readme_key_suffix": "README.yml",
@@ -74,6 +75,7 @@ Administrative metadata describing the dataset: $UUID/dtool
 Structural metadata describing the dataset: $UUID/structure.json
 Structural metadata describing the data items: $UUID/manifest.json
 Per item descriptive metadata prefixed by: $UUID/overlays/
+Dataset key/value pairs metadata prefixed by: $UUID/annotations/
 """
 
 
@@ -109,6 +111,9 @@ class S3StorageBroker(BaseStorageBroker):
         )
         self.overlays_key_prefix = self._generate_key_prefix(
             "overlays_key_infix"
+        )
+        self.annotations_key_prefix = self._generate_key_prefix(
+            "annotations_key_infix"
         )
 
         self.http_manifest_key = self._generate_key("http_manifest_key")
@@ -239,6 +244,12 @@ class S3StorageBroker(BaseStorageBroker):
     def get_overlay_key(self, overlay_name):
         return os.path.join(self.overlays_key_prefix, overlay_name + '.json')
 
+    def get_annotation_key(self, annotation_name):
+        return os.path.join(
+            self.annotations_key_prefix,
+            annotation_name + '.json'
+        )
+
     def get_manifest_key(self):
         return self._generate_key("manifest_key_suffix")
 
@@ -359,6 +370,23 @@ class S3StorageBroker(BaseStorageBroker):
             overlay_names.append(overlay_name)
 
         return overlay_names
+
+    def list_annotation_names(self):
+        """Return list of annotation names."""
+        logger.debug("List annotation names {}".format(self))
+
+        bucket = self.s3resource.Bucket(self.bucket)
+
+        annotation_names = []
+        for obj in bucket.objects.filter(
+            Prefix=self.annotations_key_prefix
+        ).all():
+
+            annotation_file = obj.key.rsplit('/', 1)[-1]
+            annotation_name, ext = annotation_file.split('.')
+            annotation_names.append(annotation_name)
+
+        return annotation_names
 
     def put_item(self, fpath, relpath):
         logger.debug("Put item {}".format(self))

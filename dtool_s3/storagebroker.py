@@ -113,10 +113,11 @@ def _put_item_with_retry(
     dest_path,
     extra_args,
     max_retry=90,  # this is the maximum value that one iteration can run for
-                   # therefore the maximum amount the total function can execute
-                   # for is double this value
+                   # therefore the maximum amount the total function can
+                   # execute for is double this value
     retry_seed=random.randint(1, 10),
-    retry_time_spent=0
+    retry_time_spent=0,
+    retry_attempts=0,
 ):
     """Robust putting of item into s3 bucket."""
     success = _upload_file(s3client, fpath, bucket, dest_path, extra_args)
@@ -128,7 +129,7 @@ def _put_item_with_retry(
         # If the object does not exist on the remote storage
         if obj is None:
 
-            # If the retry time spent, does not exceed the maximum retry time
+            # If the time spent retrying doesn't exceed the maximum retry time
             if retry_time_spent < max_retry:
 
                 # Calculate sleep time as the smaller of:
@@ -144,6 +145,7 @@ def _put_item_with_retry(
                 time.sleep(sleep_time)
 
                 retry_time_spent += sleep_time
+                retry_attempts += 1
 
                 _put_item_with_retry(
                     s3client=s3client,
@@ -153,8 +155,15 @@ def _put_item_with_retry(
                     extra_args=extra_args,
                     max_retry=max_retry,
                     retry_seed=retry_seed,
-                    retry_time_spent=retry_time_spent
+                    retry_time_spent=retry_time_spent,
+                    retry_attempts=retry_attempts
                 )
+
+            else:
+
+                logger.debug(
+                    f"Put with retry failed after {retry_attempts} attempts.")
+                return False
 
 
 class S3StorageBroker(BaseStorageBroker):

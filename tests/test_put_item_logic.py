@@ -13,9 +13,12 @@ def test_get_object():
 
 
 def test_upload_file_simulating_successful_upload():
+    """
+    Mock scenario where upload simply succeeds.
+    """
+
     from dtool_s3.storagebroker import _upload_file  # NOQA
 
-    # Mock scenario where upload succeeds without need for retry.
     s3client = MagicMock()
     s3client.upload_file = MagicMock(return_value=True)
 
@@ -31,6 +34,10 @@ def test_upload_file_simulating_successful_upload():
 
 
 def test_upload_file_simulating_nosuchupload_failure(tmp_dir_fixture):  # NOQA
+    """
+    Mock scenario where upload fails with a NoSuchUpload exception.
+    """
+
     from dtool_s3.storagebroker import _upload_file  # NOQA
     import boto3
 
@@ -63,9 +70,13 @@ def test_put_item_with_retry():
 
 
 def test_put_item_with_retry_immediate_success():
+    """
+    Mock scenario where while doing a put, the upload succeeds without needing
+    to retry.
+    """
+
     import dtool_s3.storagebroker
 
-    # Mock scenario where upload succeeds without need for retry.
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=True)
     dtool_s3.storagebroker._get_object = MagicMock()
 
@@ -74,18 +85,20 @@ def test_put_item_with_retry_immediate_success():
         "dummy_fpath",
         "dummy_bucket",
         "dummy_dest_path",
-        {},
-        90
+        {}
     )
     dtool_s3.storagebroker._upload_file.assert_called()
     dtool_s3.storagebroker._get_object.assert_not_called()
 
 
 def test_put_item_with_retry_simulating_upload_error_item_uploaded():
+    """
+    Mock scenario where while doing a put, the upload fails with an ambiguous
+    failure, however item has been successfully created in the bucket.
+    """
+
     import dtool_s3.storagebroker
 
-    # Mock scenario where upload fails, and returns ambiguous failure
-    # MultipartUploadError, but item has been created in the bucket.
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
     dtool_s3.storagebroker._get_object = MagicMock(return_value=True)
 
@@ -94,8 +107,7 @@ def test_put_item_with_retry_simulating_upload_error_item_uploaded():
         "dummy_fpath",
         "dummy_bucket",
         "dummy_dest_path",
-        {},
-        90
+        {}
     )
 
     dtool_s3.storagebroker._upload_file.assert_called_once()
@@ -103,11 +115,15 @@ def test_put_item_with_retry_simulating_upload_error_item_uploaded():
 
 
 def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
+    """
+    Mock scenario where while doing a put, the upload fails, the object hasn't
+    been created on the target, so the retry routine is engaged.
+    """
+
     import dtool_s3.storagebroker
 
     max_retry = 90
 
-    # Mock scenario where upload fails and retry occurs
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
     dtool_s3.storagebroker._get_object = MagicMock(return_value=None)
     dtool_s3.storagebroker._put_item_with_retry = MagicMock(

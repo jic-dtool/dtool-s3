@@ -1,7 +1,5 @@
 """Test the more robust put_item logic."""
 
-import os
-
 from . import tmp_dir_fixture  # NOQA
 
 try:
@@ -35,27 +33,27 @@ def test_upload_file_simulating_successful_upload():
 def test_upload_file_simulating_nosuchupload_failure(tmp_dir_fixture):  # NOQA
     from dtool_s3.storagebroker import _upload_file  # NOQA
     import boto3
-    from botocore.stub import Stubber
 
-    s3client = boto3.client('s3')
+    error_response = {'Error': {'Code': 'NoSuchUpload',
+                                'Message': 'The specified multipart upload ' +
+                                'does not exist. The upload ID might be ' +
+                                'invalid, or the multipart upload might ' +
+                                'have been aborted or completed.'}}
 
-    fpath = os.path.join(tmp_dir_fixture, "dummy.txt")
-    with open(fpath, "w") as fh:
-        fh.write("hello")
+    s3client = boto3.client("s3")
+    s3client.upload_file = MagicMock(
+        side_effect=s3client.exceptions.NoSuchUpload(
+            error_response,
+            "AbortMultipartUpload")
+    )
 
-    with Stubber(s3client) as stubber:
-        stubber.add_client_error(
-            method='upload_file',
-            service_error_code='NoSuchUpload',
-            http_status_code=404
-        )
-        value = _upload_file(
-            s3client,
-            fpath,
-            "dummy_bucket",
-            "dummy_dest_path",
-            extra_args={}
-        )
+    value = _upload_file(
+        s3client,
+        "dummy_fpath",
+        "dummy_bucket",
+        "dummy_dest_path",
+        "dummy_extra_args",
+    )
 
     assert value is False
 
@@ -77,7 +75,7 @@ def test_put_item_with_retry_immediate_success():
         "dummy_bucket",
         "dummy_dest_path",
         {},
-        4
+        90
     )
     dtool_s3.storagebroker._upload_file.assert_called()
     dtool_s3.storagebroker._get_object.assert_not_called()
@@ -97,7 +95,7 @@ def test_put_item_with_retry_simulating_upload_error_item_uploaded():
         "dummy_bucket",
         "dummy_dest_path",
         {},
-        4
+        90
     )
 
     dtool_s3.storagebroker._upload_file.assert_called_once()
@@ -107,21 +105,24 @@ def test_put_item_with_retry_simulating_upload_error_item_uploaded():
 def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
     import dtool_s3.storagebroker
 
-    retry_count = 4
+    max_retry = 90
 
-    # Mock scenario where upload fails, and retruns ambigious failure
-    # MultipartUploadError, but item has been created in the bucket.
+    # Mock scenario where upload fails and retry occurs
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
     dtool_s3.storagebroker._get_object = MagicMock(return_value=None)
+    dtool_s3.storagebroker._put_item_with_retry = MagicMock(
+        side_effect=dtool_s3.storagebroker._put_item_with_retry)
 
     dtool_s3.storagebroker._put_item_with_retry(
-        "dummy_s3client",
-        "dummy_fpath",
-        "dummy_bucket",
-        "dummy_dest_path",
-        {},
-        retry_count
+        s3client="dummy_s3client",
+        fpath="dummy_fpath",
+        bucket="dummy_bucket",
+        dest_path="dummy_dest_path",
+        extra_args={},
+        max_retry=max_retry
     )
 
-    assert dtool_s3.storagebroker._upload_file.call_count == retry_count + 1
-    assert dtool_s3.storagebroker._get_object.call_count == retry_count + 1
+    assert dtool_s3.storagebroker._put_item_with_retry.call_count > 1
+    my_args = dtool_s3.storagebroker._put_item_with_retry.call_args
+    args, kwargs = my_args
+    assert kwargs['retry_time_spent'] >= max_retry

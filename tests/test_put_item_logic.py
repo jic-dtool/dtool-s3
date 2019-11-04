@@ -84,7 +84,7 @@ def test_put_item_with_retry_immediate_success():
 def test_put_item_with_retry_simulating_upload_error_item_uploaded():
     import dtool_s3.storagebroker
 
-    # Mock scenario where upload fails, and retruns ambigious failure
+    # Mock scenario where upload fails, and returns ambiguous failure
     # MultipartUploadError, but item has been created in the bucket.
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
     dtool_s3.storagebroker._get_object = MagicMock(return_value=True)

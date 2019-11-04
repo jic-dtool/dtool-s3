@@ -40,7 +40,7 @@ def tmp_dir_fixture(request):
 
     return d
 
-    
+
 def _key_exists_in_storage_broker(storage_broker, key):
 
     bucket = storage_broker.s3resource.Bucket(storage_broker.bucket)

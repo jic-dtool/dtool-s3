@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import time
+import random
 
 try:
     from urlparse import urlunparse
@@ -96,9 +97,10 @@ def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
             ExtraArgs=extra_args
         )
 
-    except s3client.exceptions.NoSuchUpload:
-        # The NoSuchUpload error generally occurs when the expected HTTP 200 isn't recieved from the MultipartUplaod Complete request
-        logger.debug("NoSuchUpload caught")
+    except Exception as e:
+        logger.debug("Upload failed with: " + str(e))
+        # return str(e)  # Returns: "An error occurred (NoSuchUpload) when calling the AbortMultipartUpload operation: The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed."  # NOQA
+        # return str(e.__class__.__name__)  # Returns: NoSuchUpload
         return False
 
     return True
@@ -110,21 +112,48 @@ def _put_item_with_retry(
     bucket,
     dest_path,
     extra_args,
-    num_retry
+    max_retry=90,  # this is the maximum value that one iteration can run for
+                   # therefore the maxium amount the total function can execute
+                   # for is double this value
+    retry_seed=random.randint(1, 10),
+    retry_time_spent=0
 ):
     """Robust putting of item into s3 bucket."""
     success = _upload_file(s3client, fpath, bucket, dest_path, extra_args)
+
+    # If file upload did not succeed
     if not success:
         obj = _get_object(bucket, dest_path)  # NOQA
+
+        # If the object does not exist on the remote storage
         if obj is None:
-            if not num_retry <= 0:
+
+            # If the retry time spent, does not exceed the maximum retry time
+            if retry_time_spent < max_retry:
+
+                # Calculate sleep time as the smaller of:
+                #  * the maximum retry value, or
+                #  * the larger of the following, to the power of 2:
+                #   * the random retry seed, or
+                #   * the retry time spent (initially zero)
+                sleep_time = min(
+                    max_retry,
+                    (max(retry_time_spent, retry_seed) ** 2)
+                )
+
+                time.sleep(sleep_time)
+
+                retry_time_spent += sleep_time
+
                 _put_item_with_retry(
-                    s3client,
-                    fpath,
-                    bucket,
-                    dest_path,
-                    extra_args,
-                    num_retry - 1
+                    s3client=s3client,
+                    fpath=fpath,
+                    bucket=bucket,
+                    dest_path=dest_path,
+                    extra_args=extra_args,
+                    max_retry=max_retry,
+                    retry_seed=retry_seed,
+                    retry_time_spent=retry_time_spent
                 )
 
 

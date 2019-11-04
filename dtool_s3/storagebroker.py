@@ -113,7 +113,7 @@ def _put_item_with_retry(
     dest_path,
     extra_args,
     max_retry=90,  # this is the maximum value that one iteration can run for
-                   # therefore the maxium amount the total function can execute
+                   # therefore the maximum amount the total function can execute
                    # for is double this value
     retry_seed=random.randint(1, 10),
     retry_time_spent=0

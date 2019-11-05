@@ -15,7 +15,6 @@ def test_get_object_failure():
     Mock scenario where the get fails.
     """
 
-    import boto3
     from botocore.exceptions import WaiterError
     from dtool_s3.storagebroker import _get_object
 
@@ -39,8 +38,6 @@ def test_get_object_success():
     Mock scenario where the get succeeds.
     """
 
-    import boto3
-    from botocore.exceptions import WaiterError
     from dtool_s3.storagebroker import _get_object
 
     mock_s3resource = MagicMock()
@@ -56,7 +53,6 @@ def test_get_object_success():
 
     obj.wait_until_exists.assert_called_once()
     assert value is True
-
 
 
 def test_upload_file_simulating_successful_upload():

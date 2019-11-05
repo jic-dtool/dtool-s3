@@ -89,7 +89,7 @@ def _get_object(s3resource, bucket, dest_path):
 
     try:
         obj = s3resource.Object(bucket, dest_path)
-        obj.wait_until_exists(WaiterConfig={'Delay': 5,'MaxAttempts': 20})
+        obj.wait_until_exists(WaiterConfig={'Delay': 5, 'MaxAttempts': 20})
     except botocore.waiter.WaiterError:
         return False
     return True

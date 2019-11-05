@@ -10,8 +10,53 @@ except ImportError:
     from mock import MagicMock
 
 
-def test_get_object():
-    from dtool_s3.storagebroker import _get_object  # NOQA
+def test_get_object_failure():
+    """
+    Mock scenario where the get fails.
+    """
+
+    import boto3
+    from botocore.exceptions import WaiterError
+    from dtool_s3.storagebroker import _get_object
+
+    mock_s3resource = MagicMock()
+    obj = MagicMock()
+    obj.wait_until_exists = MagicMock(side_effect=WaiterError(
+        'ObjectExists', 'Max attempts exceeded', {}))
+    mock_s3resource.Object = MagicMock(return_value=obj)
+
+    value = _get_object(
+        mock_s3resource,
+        "dummy_bucket",
+        "dummy_dest_path"
+    )
+
+    assert value is False
+
+
+def test_get_object_success():
+    """
+    Mock scenario where the get succeeds.
+    """
+
+    import boto3
+    from botocore.exceptions import WaiterError
+    from dtool_s3.storagebroker import _get_object
+
+    mock_s3resource = MagicMock()
+    obj = MagicMock()
+    obj.wait_until_exists = MagicMock()
+    mock_s3resource.Object = MagicMock(return_value=obj)
+
+    value = _get_object(
+        mock_s3resource,
+        "dummy_bucket",
+        "dummy_dest_path"
+    )
+
+    obj.wait_until_exists.assert_called_once()
+    assert value is True
+
 
 
 def test_upload_file_simulating_successful_upload():
@@ -110,6 +155,7 @@ def test_put_item_with_retry_immediate_success():
 
     dtool_s3.storagebroker._put_item_with_retry(
         "dummy_s3client",
+        "dummy_s3resource",
         "dummy_fpath",
         "dummy_bucket",
         "dummy_dest_path",
@@ -132,6 +178,7 @@ def test_put_item_with_retry_simulating_upload_error_item_uploaded():
 
     dtool_s3.storagebroker._put_item_with_retry(
         "dummy_s3client",
+        "dummy_s3resource",
         "dummy_fpath",
         "dummy_bucket",
         "dummy_dest_path",
@@ -160,6 +207,7 @@ def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
     with pytest.raises(dtool_s3.storagebroker.S3StorageBrokerPutItemError):
         dtool_s3.storagebroker._put_item_with_retry(
             s3client="dummy_s3client",
+            s3resource="dummy_s3resource",
             fpath="dummy_fpath",
             bucket="dummy_bucket",
             dest_path="dummy_dest_path",

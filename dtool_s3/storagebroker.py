@@ -10,6 +10,7 @@ except ImportError:
     from urllib.parse import urlunparse
 
 import boto3
+import botocore.waiter
 from botocore.errorfactory import ClientError
 from botocore.exceptions import EndpointConnectionError
 
@@ -81,8 +82,15 @@ Per item descriptive metadata prefixed by: $UUID/overlays/
 
 # Helper functions
 
-def _get_object(bucket, dest_path):
+def _get_object(s3resource, bucket, dest_path):
     """Return object from bucket."""
+
+    try:
+        obj = s3resource.Object(bucket, dest_path)
+        obj.wait_until_exists(WaiterConfig={'Delay': 5,'MaxAttempts': 20})
+    except botocore.waiter.WaiterError:
+        return False
+    return True
 
 
 def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
@@ -99,8 +107,6 @@ def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
     except (s3client.exceptions.NoSuchUpload,
             EndpointConnectionError) as e:
         logger.debug("Upload failed with: " + str(e))
-        # return str(e)  # Returns: "An error occurred (NoSuchUpload) when calling the AbortMultipartUpload operation: The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed."  # NOQA
-        # return str(e.__class__.__name__)  # Returns: NoSuchUpload
         return False
 
     return True
@@ -108,6 +114,7 @@ def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
 
 def _put_item_with_retry(
     s3client,
+    s3resource,
     fpath,
     bucket,
     dest_path,
@@ -124,7 +131,7 @@ def _put_item_with_retry(
 
     # If file upload did not succeed
     if not success:
-        obj = _get_object(bucket, dest_path)  # NOQA
+        obj = _get_object(s3resource, bucket, dest_path)  # NOQA
 
         # If the object does not exist on the remote storage
         if obj is None:
@@ -149,6 +156,7 @@ def _put_item_with_retry(
 
                 _put_item_with_retry(
                     s3client=s3client,
+                    s3resource=s3resource,
                     fpath=fpath,
                     bucket=bucket,
                     dest_path=dest_path,

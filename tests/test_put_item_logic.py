@@ -65,6 +65,32 @@ def test_upload_file_simulating_nosuchupload_failure(tmp_dir_fixture):  # NOQA
     assert value is False
 
 
+def test_upload_file_simulating_endpointconnectionerror(tmp_dir_fixture):  # NOQA
+    """
+    Mock scenario where upload fails with a EndpointConnectionError exception.
+    """
+
+    from dtool_s3.storagebroker import _upload_file  # NOQA
+    import boto3
+    from botocore.exceptions import EndpointConnectionError
+
+    s3client = boto3.client("s3")
+    s3client.upload_file = MagicMock(
+        side_effect=EndpointConnectionError(
+            endpoint_url="dummy_bucket/dest_path")
+    )
+
+    value = _upload_file(
+        s3client,
+        "dummy_fpath",
+        "dummy_bucket",
+        "dummy_dest_path",
+        "dummy_extra_args",
+    )
+
+    assert value is False
+
+
 def test_put_item_with_retry():
     from dtool_s3.storagebroker import _put_item_with_retry  # NOQA
 
@@ -122,7 +148,7 @@ def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
 
     import dtool_s3.storagebroker
 
-    max_retry_time = 90
+    max_retry_time = 10
 
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
     dtool_s3.storagebroker._get_object = MagicMock(return_value=None)

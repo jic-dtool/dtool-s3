@@ -11,6 +11,7 @@ except ImportError:
 
 import boto3
 from botocore.errorfactory import ClientError
+from botocore.exceptions import EndpointConnectionError
 
 from dtoolcore.utils import (
     generate_identifier,
@@ -95,7 +96,8 @@ def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
             ExtraArgs=extra_args
         )
 
-    except Exception as e:
+    except (s3client.exceptions.NoSuchUpload,
+            EndpointConnectionError) as e:
         logger.debug("Upload failed with: " + str(e))
         # return str(e)  # Returns: "An error occurred (NoSuchUpload) when calling the AbortMultipartUpload operation: The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed."  # NOQA
         # return str(e.__class__.__name__)  # Returns: NoSuchUpload

@@ -110,9 +110,9 @@ def _put_item_with_retry(
     bucket,
     dest_path,
     extra_args,
-    max_retry=90,  # this is the maximum value that one iteration can run for
-                   # therefore the maximum amount the total function can
-                   # execute for is double this value
+    max_retry_time=90,  # this is the maximum value that one iteration can run
+                        # for therefore the maximum amount the total function
+                        # can execute for is double this value
     retry_seed=random.randint(1, 10),
     retry_time_spent=0,
     retry_attempts=0,
@@ -128,7 +128,7 @@ def _put_item_with_retry(
         if obj is None:
 
             # If the time spent retrying doesn't exceed the maximum retry time
-            if retry_time_spent < max_retry:
+            if retry_time_spent < max_retry_time:
 
                 # Calculate sleep time as the smaller of:
                 #  * the maximum retry value, or
@@ -136,7 +136,7 @@ def _put_item_with_retry(
                 #   * the random retry seed, or
                 #   * the retry time spent (initially zero)
                 sleep_time = min(
-                    max_retry,
+                    max_retry_time,
                     (max(retry_time_spent, retry_seed) ** 2)
                 )
 
@@ -151,7 +151,7 @@ def _put_item_with_retry(
                     bucket=bucket,
                     dest_path=dest_path,
                     extra_args=extra_args,
-                    max_retry=max_retry,
+                    max_retry_time=max_retry_time,
                     retry_seed=retry_seed,
                     retry_time_spent=retry_time_spent,
                     retry_attempts=retry_attempts
@@ -159,7 +159,7 @@ def _put_item_with_retry(
 
             else:
 
-                logger.debug(
+                logger.warning(
                     f"Put with retry failed after {retry_attempts} attempts.")
                 return False
 

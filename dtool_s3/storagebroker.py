@@ -161,9 +161,15 @@ def _put_item_with_retry(
 
             else:
 
-                logger.warning(
-                    f"Put with retry failed after {retry_attempts} attempts.")
-                return False
+                error = "Put with retry failed after {} attempts.".format(
+                    retry_attempts
+                )
+                logger.warning(error)
+                raise(S3StorageBrokerPutItemError(error))
+
+
+class S3StorageBrokerPutItemError(RuntimeError):
+    pass
 
 
 class S3StorageBroker(BaseStorageBroker):

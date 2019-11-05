@@ -1,5 +1,7 @@
 """Test the more robust put_item logic."""
 
+import pytest
+
 from . import tmp_dir_fixture  # NOQA
 
 try:
@@ -155,14 +157,15 @@ def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
     dtool_s3.storagebroker._put_item_with_retry = MagicMock(
         side_effect=dtool_s3.storagebroker._put_item_with_retry)
 
-    dtool_s3.storagebroker._put_item_with_retry(
-        s3client="dummy_s3client",
-        fpath="dummy_fpath",
-        bucket="dummy_bucket",
-        dest_path="dummy_dest_path",
-        extra_args={},
-        max_retry_time=max_retry_time
-    )
+    with pytest.raises(dtool_s3.storagebroker.S3StorageBrokerPutItemError):
+        dtool_s3.storagebroker._put_item_with_retry(
+            s3client="dummy_s3client",
+            fpath="dummy_fpath",
+            bucket="dummy_bucket",
+            dest_path="dummy_dest_path",
+            extra_args={},
+            max_retry_time=max_retry_time
+        )
 
     assert dtool_s3.storagebroker._put_item_with_retry.call_count > 1
     my_args = dtool_s3.storagebroker._put_item_with_retry.call_args

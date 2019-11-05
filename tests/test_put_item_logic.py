@@ -122,7 +122,7 @@ def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
 
     import dtool_s3.storagebroker
 
-    max_retry = 90
+    max_retry_time = 90
 
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
     dtool_s3.storagebroker._get_object = MagicMock(return_value=None)
@@ -135,10 +135,10 @@ def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
         bucket="dummy_bucket",
         dest_path="dummy_dest_path",
         extra_args={},
-        max_retry=max_retry
+        max_retry_time=max_retry_time
     )
 
     assert dtool_s3.storagebroker._put_item_with_retry.call_count > 1
     my_args = dtool_s3.storagebroker._put_item_with_retry.call_args
     args, kwargs = my_args
-    assert kwargs['retry_time_spent'] >= max_retry
+    assert kwargs['retry_time_spent'] >= max_retry_time

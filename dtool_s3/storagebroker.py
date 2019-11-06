@@ -509,15 +509,19 @@ class S3StorageBroker(BaseStorageBroker):
 
         fname = generate_identifier(relpath)
         dest_path = self.data_key_prefix + fname
-        self.s3client.upload_file(
-            fpath,
-            self.bucket,
-            dest_path,
-            ExtraArgs={'Metadata': {
+        extra_args = {
+            'Metadata': {
                 'handle': relpath,
                 'checksum': checksum,
-                }
             }
+        }
+        _put_item_with_retry(
+            s3client=self.s3client,
+            s3resource=self.s3resource,
+            fpath=fpath,
+            bucket=self.bucket,
+            dest_path=dest_path,
+            extra_args=extra_args
         )
 
         return relpath

@@ -10,6 +10,9 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
+- Added more robust logic for retrying interrupted put_item calls in the
+  S3StorageBroker thanks to Adam Carrgilson
+
 
 Changed
 ^^^^^^^

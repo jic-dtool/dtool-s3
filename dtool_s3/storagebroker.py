@@ -84,7 +84,7 @@ Dataset key/value pairs metadata prefixed by: $UUID/annotations/
 
 # Helper functions
 
-def _get_object(s3resource, bucket, dest_path):
+def _object_exists(s3resource, bucket, dest_path):
     """Return object from bucket."""
 
     try:
@@ -133,7 +133,7 @@ def _put_item_with_retry(
 
     # If file upload did not succeed
     if not success:
-        obj = _get_object(s3resource, bucket, dest_path)  # NOQA
+        obj = _object_exists(s3resource, bucket, dest_path)  # NOQA
 
         # If the object does not exist on the remote storage
         if obj is None:

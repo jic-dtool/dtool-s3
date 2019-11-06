@@ -16,7 +16,7 @@ def test_get_object_failure():
     """
 
     from botocore.exceptions import WaiterError
-    from dtool_s3.storagebroker import _get_object
+    from dtool_s3.storagebroker import _object_exists
 
     mock_s3resource = MagicMock()
     obj = MagicMock()
@@ -24,7 +24,7 @@ def test_get_object_failure():
         'ObjectExists', 'Max attempts exceeded', {}))
     mock_s3resource.Object = MagicMock(return_value=obj)
 
-    value = _get_object(
+    value = _object_exists(
         mock_s3resource,
         "dummy_bucket",
         "dummy_dest_path"
@@ -38,14 +38,14 @@ def test_get_object_success():
     Mock scenario where the get succeeds.
     """
 
-    from dtool_s3.storagebroker import _get_object
+    from dtool_s3.storagebroker import _object_exists
 
     mock_s3resource = MagicMock()
     obj = MagicMock()
     obj.wait_until_exists = MagicMock()
     mock_s3resource.Object = MagicMock(return_value=obj)
 
-    value = _get_object(
+    value = _object_exists(
         mock_s3resource,
         "dummy_bucket",
         "dummy_dest_path"
@@ -66,11 +66,11 @@ def test_upload_file_simulating_successful_upload():
     s3client.upload_file = MagicMock(return_value=True)
 
     value = _upload_file(
-            s3client,
-            "dummy_fpath",
-            "dummy_bucket",
-            "dummy_dest_path",
-            "dummy_extra_args"
+        s3client,
+        "dummy_fpath",
+        "dummy_bucket",
+        "dummy_dest_path",
+        "dummy_extra_args"
     )
 
     assert value is True
@@ -147,7 +147,7 @@ def test_put_item_with_retry_immediate_success():
     import dtool_s3.storagebroker
 
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=True)
-    dtool_s3.storagebroker._get_object = MagicMock()
+    dtool_s3.storagebroker._object_exists = MagicMock()
 
     dtool_s3.storagebroker._put_item_with_retry(
         "dummy_s3client",
@@ -158,7 +158,7 @@ def test_put_item_with_retry_immediate_success():
         {}
     )
     dtool_s3.storagebroker._upload_file.assert_called()
-    dtool_s3.storagebroker._get_object.assert_not_called()
+    dtool_s3.storagebroker._object_exists.assert_not_called()
 
 
 def test_put_item_with_retry_simulating_upload_error_item_uploaded():
@@ -170,7 +170,7 @@ def test_put_item_with_retry_simulating_upload_error_item_uploaded():
     import dtool_s3.storagebroker
 
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
-    dtool_s3.storagebroker._get_object = MagicMock(return_value=True)
+    dtool_s3.storagebroker._object_exists = MagicMock(return_value=True)
 
     dtool_s3.storagebroker._put_item_with_retry(
         "dummy_s3client",
@@ -182,7 +182,7 @@ def test_put_item_with_retry_simulating_upload_error_item_uploaded():
     )
 
     dtool_s3.storagebroker._upload_file.assert_called_once()
-    dtool_s3.storagebroker._get_object.assert_called_once()
+    dtool_s3.storagebroker._object_exists.assert_called_once()
 
 
 def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
@@ -196,7 +196,7 @@ def test_put_item_with_retry_simulating_upload_error_item_doesnt_exist():
     max_retry_time = 10
 
     dtool_s3.storagebroker._upload_file = MagicMock(return_value=False)
-    dtool_s3.storagebroker._get_object = MagicMock(return_value=None)
+    dtool_s3.storagebroker._object_exists = MagicMock(return_value=None)
     dtool_s3.storagebroker._put_item_with_retry = MagicMock(
         side_effect=dtool_s3.storagebroker._put_item_with_retry)
 

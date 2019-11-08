@@ -134,6 +134,31 @@ def test_upload_file_simulating_endpointconnectionerror(tmp_dir_fixture):  # NOQ
     assert value is False
 
 
+def test_upload_file_simulating_S3UploadFailedError(tmp_dir_fixture):  # NOQA
+    """
+    Mock scenario where upload fails with a S3UploadFailedError exception.
+    """
+
+    from dtool_s3.storagebroker import _upload_file  # NOQA
+    import boto3
+    from boto3.exceptions import S3UploadFailedError
+
+    s3client = boto3.client("s3")
+    s3client.upload_file = MagicMock(
+        side_effect=S3UploadFailedError()
+    )
+
+    value = _upload_file(
+        s3client,
+        "dummy_fpath",
+        "dummy_bucket",
+        "dummy_dest_path",
+        "dummy_extra_args",
+    )
+
+    assert value is False
+
+
 def test_put_item_with_retry():
     from dtool_s3.storagebroker import _put_item_with_retry  # NOQA
 

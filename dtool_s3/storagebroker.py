@@ -10,6 +10,7 @@ except ImportError:
     from urllib.parse import urlunparse
 
 import boto3
+import boto3.exceptions
 import botocore.waiter
 from botocore.errorfactory import ClientError
 from botocore.exceptions import EndpointConnectionError
@@ -107,6 +108,7 @@ def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
         )
 
     except (s3client.exceptions.NoSuchUpload,
+            boto3.exceptions.S3UploadFailedError,
             EndpointConnectionError) as e:
         logger.debug("Upload failed with: " + str(e))
         return False

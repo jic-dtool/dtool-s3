@@ -10,6 +10,9 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
+- Added ``boto3.exceptions.S3UploadFailedError`` to list of exceptions to
+  retry a file upload
+
 
 Changed
 ^^^^^^^
@@ -38,7 +41,9 @@ Added
 ^^^^^
 
 - Added more robust logic for retrying interrupted put_item calls in the
-  S3StorageBroker thanks to Adam Carrgilson
+  S3StorageBroker thanks to Adam Carrgilson. Code now retries when
+  encountering ``botocore.errorfactory.NoSuchUpload`` and
+  ``botocore.exceptions.EndpointConnectionError.
 
 
 [0.7.0] - 2019-10-31

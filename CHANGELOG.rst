@@ -10,9 +10,6 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
-- Added ``boto3.exceptions.S3UploadFailedError`` to list of exceptions to
-  retry a file upload
-
 
 Changed
 ^^^^^^^
@@ -32,6 +29,16 @@ Fixed
 
 Security
 ^^^^^^^^
+
+
+[0.9.0] - 2019-11-06
+--------------------
+
+Added
+^^^^^
+
+- Added ``boto3.exceptions.S3UploadFailedError`` to list of exceptions to
+  retry a file upload
 
 
 [0.8.0] - 2019-11-06

@@ -1,3 +1,5 @@
+import os
+
 import datetime
 import logging
 
@@ -113,11 +115,13 @@ def get_datetime_obj(s):
     return datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S,%f")
 
 
-def parse_logs(log_file, dataset):
+def parse_logs(log_file, dataset, include_header=True):
 
     with open(log_file, "r") as fh:
         item_data = ItemData(dataset)
-        item_data.echo_csv_header()
+
+        if include_header:
+            item_data.echo_csv_header()
 
         use_next_line_as_upload_start = False
 
@@ -158,14 +162,63 @@ def parse_logs(log_file, dataset):
         item_data.echo_csv()
 
 
-@click.command()
+@click.group()
+def cli():
+    """Create csv file for gantt chart generation."""
+    pass
+
+
+@cli.command()
 @click.argument("log_file", type=click.Path(exists=True, dir_okay=False))
 @click.argument("dataset_uri")
-def main(log_file, dataset_uri):
+def specific(log_file, dataset_uri):
+    """Analyse a specific log file."""
 
     ds = dtoolcore.DataSet.from_uri(dataset_uri)
     parse_logs(log_file, ds)
 
 
+@cli.command()
+@click.argument("log_dir", type=click.Path(exists=True, file_okay=False))
+def all(log_dir):
+    """Assumes specific directory structure from command
+
+    mkdir logs
+    dtool cp -q SRC_DS DEST_S3_BUCKET > logs/upload_01.out 2> logs/upload_01.err
+
+    In other words:
+
+    1) all logs in a directory
+    2) dtool cp run with the -q command so that stdout only contains DEST_URI
+    3) stdout redirected to a file with suffix .out
+    4) stderr redirected to a file with suffix .err
+    5) identical prefix for .out and .err files
+    """
+
+    err_files = []
+    out_files = []
+    for fname in os.listdir(log_dir):
+        fpath = os.path.join(log_dir, fname)
+        if fname.endswith(".err"):
+            err_files.append(fpath)
+        elif fname.endswith(".out"):
+            out_files.append(fpath)
+
+    assert len(err_files) == len(out_files)
+
+    first = True
+    for err_fpath, out_fpath in zip(sorted(err_files), sorted(out_files)):
+        with open(out_fpath, "r") as fh:
+            ds_uri = fh.readline().strip()
+        ds = dtoolcore.DataSet.from_uri(ds_uri)
+
+        if first:
+            parse_logs(err_fpath, ds, include_header=True)
+            first = False
+        else:
+            parse_logs(err_fpath, ds, include_header=False)
+
+
+
 if __name__ == "__main__":
-    main()
+    cli()

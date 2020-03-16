@@ -15,6 +15,8 @@ from dtool_s3.storagebroker import (
 _HERE = os.path.dirname(__file__)
 TEST_SAMPLE_DATA = os.path.join(_HERE, "data")
 
+S3_TEST_BASE_URI = os.getenv("S3_TEST_BASE_URI", "s3://test-dtool-s3-bucket")
+
 
 @contextmanager
 def tmp_env_var(key, value):
@@ -118,7 +120,7 @@ def tmp_uuid_and_uri(request):
     uri = S3StorageBroker.generate_uri(
         "test_dataset",
         uuid,
-        "s3://test-dtool-s3-bucket"
+        S3_TEST_BASE_URI,
     )
 
     @request.addfinalizer

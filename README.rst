@@ -55,6 +55,27 @@ To list all the datasets in a S3 bucket one can use the command below::
 See the `dtool documentation <http://dtool.readthedocs.io>`_ for more detail.
 
 
+Testing
+-------
+
+Linux/Mac
+~~~~~~~~~
+
+::
+    export S3_TEST_BASE_URI="s3://your-dtool-s3-test-bucket"
+    python setup.py develop
+    pytest
+
+
+Windows
+~~~~~~~
+
+::
+    $env:S3_TEST_BASE_URI = "s3://your-dtool-s3-test-bucket"
+    python setup.py develop
+    pytest
+
+
 Related packages
 ----------------
 

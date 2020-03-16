@@ -39,6 +39,7 @@ _STRUCTURE_PARAMETERS = {
     "fragment_key_infix": "fragments",
     "overlays_key_infix": "overlays",
     "annotations_key_infix": "annotations",
+    "tags_key_infix": "tags",
     "structure_key_suffix": "structure.json",
     "dtool_readme_key_suffix": "README.txt",
     "dataset_readme_key_suffix": "README.yml",
@@ -80,6 +81,7 @@ Structural metadata describing the dataset: $UUID/structure.json
 Structural metadata describing the data items: $UUID/manifest.json
 Per item descriptive metadata prefixed by: $UUID/overlays/
 Dataset key/value pairs metadata prefixed by: $UUID/annotations/
+Dataset tags metadata: $UUID/tags/
 """
 
 
@@ -220,6 +222,9 @@ class S3StorageBroker(BaseStorageBroker):
         self.annotations_key_prefix = self._generate_key_prefix(
             "annotations_key_infix"
         )
+        self.tags_key_prefix = self._generate_key_prefix(
+            "tags_key_infix"
+        )
 
         self.http_manifest_key = self._generate_key("http_manifest_key")
 
@@ -343,6 +348,11 @@ class S3StorageBroker(BaseStorageBroker):
 
         return response['Body'].read().decode('utf-8')
 
+    def delete_key(self, key):
+        logger.debug("Delete key {} {}".format(key, self))
+
+        self.s3resource.Object(self.bucket, key).delete()
+
     def get_structure_key(self):
         return self._generate_key("structure_key_suffix")
 
@@ -359,6 +369,12 @@ class S3StorageBroker(BaseStorageBroker):
         return os.path.join(
             self.annotations_key_prefix,
             annotation_name + '.json'
+        )
+
+    def get_tag_key(self, tag):
+        return os.path.join(
+            self.tags_key_prefix,
+            tag
         )
 
     def get_manifest_key(self):
@@ -498,6 +514,22 @@ class S3StorageBroker(BaseStorageBroker):
             annotation_names.append(annotation_name)
 
         return annotation_names
+
+    def list_tags(self):
+        """Return list of tags."""
+        logger.debug("List tags {}".format(self))
+
+        bucket = self.s3resource.Bucket(self.bucket)
+
+        tags = []
+        for obj in bucket.objects.filter(
+            Prefix=self.tags_key_prefix
+        ).all():
+
+            tag = obj.key.rsplit('/', 1)[-1]
+            tags.append(tag)
+
+        return tags
 
     def put_item(self, fpath, relpath):
         logger.debug("Put item {}".format(self))

@@ -193,7 +193,7 @@ def all(log_dir):
     3) stdout redirected to a file with suffix .out
     4) stderr redirected to a file with suffix .err
     5) identical prefix for .out and .err files
-    """
+    """  # NOQA
 
     err_files = []
     out_files = []
@@ -217,7 +217,6 @@ def all(log_dir):
             first = False
         else:
             parse_logs(err_fpath, ds, include_header=False)
-
 
 
 if __name__ == "__main__":

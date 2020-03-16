@@ -1,6 +1,5 @@
 import os
 
-from dtoolcore import DataSet
 
 from . import tmp_uuid_and_uri  # NOQA
 from . import TEST_SAMPLE_DATA

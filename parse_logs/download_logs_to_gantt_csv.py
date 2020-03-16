@@ -113,7 +113,6 @@ def parse_logs(log_file, include_header=True):
                 # message with new line in it!
                 pass
 
-
     dataset = dtoolcore.DataSet.from_uri(dataset_uri)
 
     with open(log_file, "r") as fh:
@@ -172,7 +171,7 @@ def all(log_dir):
     1) all stderr logs in a directory
     2) dtool cp run with the -q command so that stdout only contains DEST_URI
     3) stderr redirected to a file with suffix .err
-    """
+    """  # NOQA
 
     first = True
     for fname in os.listdir(log_dir):

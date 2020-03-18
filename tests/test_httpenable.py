@@ -31,6 +31,7 @@ def test_http_enable(tmp_uuid_and_uri):  # NOQA
 
     dataset = DataSet.from_uri(dest_uri)
 
+
     # Test HTTP manifest.
     http_manifest = dataset._storage_broker._generate_http_manifest()
     assert "admin_metadata" in http_manifest
@@ -39,10 +40,16 @@ def test_http_enable(tmp_uuid_and_uri):  # NOQA
     assert "readme_url" in http_manifest
     assert "manifest_url" in http_manifest
     assert "item_urls" in http_manifest
+    assert "annotations" in http_manifest
+    assert "tags" in http_manifest
     assert set(http_manifest["item_urls"].keys()) == set(dataset.identifiers)
 
     # Add an annotation.
     dataset.put_annotation("project", "dtool-testing")
+
+    # Add tags.
+    dataset.put_tag("amazing")
+    dataset.put_tag("stuff")
 
     access_url = dataset._storage_broker.http_enable()
 
@@ -52,6 +59,9 @@ def test_http_enable(tmp_uuid_and_uri):  # NOQA
 
     # Assert that the annotation has been copied across.
     assert dataset_from_http.get_annotation("project") == "dtool-testing"
+
+    # Asser that the tags are available.
+    assert dataset_from_http.list_tags() == ["amazing", "stuff"]
 
     from dtoolcore.compare import (
         diff_identifiers,

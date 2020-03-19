@@ -7,14 +7,8 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 [Unreleased]
 ------------
 
-Added support for tags.
-
 Added
 ^^^^^
-
-- Added ``dtool_s3.storagebroker.delete_key()`` method
-- Added ``dtool_s3.storagebroker.get_tag_key()`` method
-- Added ``dtool_s3.storagebroker.list_tags()`` method
 
 
 Changed
@@ -35,6 +29,19 @@ Fixed
 
 Security
 ^^^^^^^^
+
+
+[0.10.0] - 2020-03-19
+---------------------
+
+Added support for tags.
+
+Added
+^^^^^
+
+- Added ``dtool_s3.storagebroker.delete_key()`` method
+- Added ``dtool_s3.storagebroker.get_tag_key()`` method
+- Added ``dtool_s3.storagebroker.list_tags()`` method
 
 
 [0.9.0] - 2019-11-06

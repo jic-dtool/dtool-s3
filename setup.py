@@ -20,7 +20,7 @@ setup(
     download_url="{}/tarball/{}".format(url, version),
     install_requires=[
         "click",
-        "dtoolcore>=3.13",
+        "dtoolcore>=3.17",
         "dtool_cli",
         "boto3",
     ],

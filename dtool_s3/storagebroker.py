@@ -58,8 +58,10 @@ Content provided during the dataset creation process
 
 Dataset registration key (at top level of bucket): dtool-$UUID
 
-Where UUID is the unique identifier for the dataset. The file is empty and
-used to aid fast enumeration of unique datasets in the bucket.
+Where UUID is the unique identifier for the dataset. The contains the local
+path to the dataset and is empty if the dataset is stored in the top level
+of the bucket. It is used to aid fast enumeration of unique datasets in the
+bucket.
 
 The UUID is used as a prefix for all other keys in the dataset.
 
@@ -234,17 +236,36 @@ class S3StorageBroker(BaseStorageBroker):
             default=DEFAULT_CACHE_PATH
         )
 
+        self.dataset_prefix = None
+
     # Generic helper functions.
 
+    def _get_prefix(self, structure_dict_key):
+        if not hasattr(self, '_prefix'):
+            # Load prefix only if it does not exist
+            try:
+                rkey = self.s3resource.Object(
+                    self.bucket, self.dataset_registration_key).get()
+                # If the registration key exists, we use the prefix stored
+                # there
+                self._prefix = rkey['Body'].read().decode()
+            except botocore.exceptions.ClientError:
+                # If the registration key does not exist, we use the
+                # configured prefix
+                self._prefix = '' if self.dataset_prefix is None \
+                    else self.dataset_prefix
+        return self._prefix
+
     def _generate_key(self, structure_dict_key):
-        return self.uuid + '/' + self._structure_parameters[structure_dict_key]
+        prefix = self._get_prefix(structure_dict_key)
+        return prefix + self.uuid + '/' + self._structure_parameters[structure_dict_key]
 
     def _generate_key_prefix(self, structure_dict_key):
         return self._generate_key(structure_dict_key) + '/'
 
     def _get_item_object(self, handle):
         identifier = generate_identifier(handle)
-        item_key = self.data_key_prefix + identifier
+        item_key = self._prefix + identifier
         obj = self.s3resource.Object(self.bucket, item_key)
         return obj
 
@@ -332,7 +353,7 @@ class S3StorageBroker(BaseStorageBroker):
 
     def _create_structure(self):
         self.s3resource.Object(self.bucket, self.dataset_registration_key).put(
-            Body=''
+            Body='' if self.dataset_prefix is None else self.dataset_prefix
         )
 
     def put_text(self, key, content):

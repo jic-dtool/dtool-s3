@@ -249,11 +249,15 @@ class S3StorageBroker(BaseStorageBroker):
                 # If the registration key exists, we use the prefix stored
                 # there
                 self._prefix = rkey['Body'].read().decode()
+                logger.debug('Prefix from registration key: {}'
+                    .format(self._prefix))
             except botocore.exceptions.ClientError:
                 # If the registration key does not exist, we use the
                 # configured prefix
                 self._prefix = '' if self.dataset_prefix is None \
                     else self.dataset_prefix
+                logger.debug('Prefix from configuration: {}'
+                    .format(self._prefix))
         return self._prefix
 
     def _generate_key(self, structure_dict_key):
@@ -265,7 +269,7 @@ class S3StorageBroker(BaseStorageBroker):
 
     def _get_item_object(self, handle):
         identifier = generate_identifier(handle)
-        item_key = self._prefix + identifier
+        item_key = self.data_key_prefix + identifier
         obj = self.s3resource.Object(self.bucket, item_key)
         return obj
 

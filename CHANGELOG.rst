@@ -10,6 +10,7 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
+- User-specified prefix for object path
 
 Changed
 ^^^^^^^

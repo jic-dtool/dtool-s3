@@ -1,7 +1,5 @@
 """Test the storage prefix code."""
 
-import pytest
-
 from . import tmp_env_var, S3_TEST_BASE_URI, _remove_dataset
 
 

@@ -8,7 +8,7 @@ from dtool_cli.cli import (
 )
 
 
-def _chunks(l, n):
+def _chunks(l, n):  # NOQA
     """Yield successive n-sized chunks from l."""
 
     for i in range(0, len(l), n):

@@ -1,4 +1,3 @@
-
 from contextlib import contextmanager
 import os
 import json
@@ -58,7 +57,7 @@ def _all_objects_in_storage_broker(storage_broker):
 
     bucket = storage_broker.s3resource.Bucket(storage_broker.bucket)
 
-    for obj in bucket.objects.filter(Prefix=storage_broker._get_prefix()).all():
+    for obj in bucket.objects.filter(Prefix=storage_broker._get_prefix()).all():  # NOQA
         yield obj.key
 
     registration_key = "dtool-{}".format(storage_broker.uuid)
@@ -88,7 +87,7 @@ def _get_unicode_from_key(storage_broker, key):
     return content_as_string
 
 
-def _chunks(l, n):
+def _chunks(l, n):  # NOQA
     """Yield successive n-sized chunks from l."""
 
     for i in range(0, len(l), n):

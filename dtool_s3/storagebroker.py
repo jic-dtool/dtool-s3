@@ -710,7 +710,7 @@ class S3StorageBroker(BaseStorageBroker):
 
         access_url = "https://{}.s3.amazonaws.com/{}".format(
             self.bucket,
-            self.uuid
+            self._get_prefix() + self.uuid
         )
 
         return access_url

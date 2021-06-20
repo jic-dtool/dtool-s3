@@ -10,7 +10,6 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
-- User-specified prefix for object path
 
 Changed
 ^^^^^^^
@@ -30,6 +29,16 @@ Fixed
 
 Security
 ^^^^^^^^
+
+
+[0.11.0] - 2021-06-20
+---------------------
+
+Added
+^^^^^
+
+- Added ability to specify user prefix for object path thanks to `Lars Pastewka
+  <https://github.com/pastewka>`_
 
 
 [0.10.0] - 2020-03-19

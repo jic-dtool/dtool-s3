@@ -13,7 +13,7 @@ setup(
     include_package_data=True,
     # Package will be released using Tjelvar's PyPi credentials.
     author="Tjelvar Olsson",
-    author_email="tjelvar.olsson@jic.ac.uk",
+    author_email="tjelvar.olsson@gmail.com",
 #   author="Matthew Hartley",  # NOQA
 #   author_email="matthew.hartley@jic.ac.uk",  # NOQA
     url=url,

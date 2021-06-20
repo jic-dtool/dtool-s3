@@ -240,7 +240,7 @@ class S3StorageBroker(BaseStorageBroker):
 
     # Generic helper functions.
 
-    def _get_prefix(self, structure_dict_key):
+    def _get_prefix(self):
         if not hasattr(self, '_prefix'):
             # Load prefix only if it does not exist
             try:
@@ -261,7 +261,7 @@ class S3StorageBroker(BaseStorageBroker):
         return self._prefix
 
     def _generate_key(self, structure_dict_key):
-        prefix = self._get_prefix(structure_dict_key)
+        prefix = self._get_prefix()
         return prefix + self.uuid + '/' + self._structure_parameters[structure_dict_key]
 
     def _generate_key_prefix(self, structure_dict_key):

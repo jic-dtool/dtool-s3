@@ -2,7 +2,6 @@
 import os
 import datetime
 
-import pytz
 import pytest
 
 from dtoolcore.filehasher import md5sum_hexdigest
@@ -197,13 +196,6 @@ def test_creation_and_reading(tmp_uuid_and_uri):  # NOQA
     assert item_properties['size_in_bytes'] == 276
     assert item_properties['hash'] == expected_hash
     assert 'utc_timestamp' in item_properties
-    time_from_item = datetime.datetime.fromtimestamp(
-        float(item_properties['utc_timestamp']),
-        tz=pytz.UTC
-    )
-    time_delta = datetime.datetime.now(tz=pytz.UTC) - time_from_item
-    assert time_delta.days == 0
-    assert time_delta.seconds < 100
 
     # Add metadata
     proto_dataset.add_item_metadata(handle, 'foo', 'bar')

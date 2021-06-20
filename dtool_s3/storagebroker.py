@@ -237,7 +237,6 @@ class S3StorageBroker(BaseStorageBroker):
             default=DEFAULT_CACHE_PATH
         )
 
-
     # Generic helper functions.
 
     def _get_prefix(self):
@@ -249,20 +248,24 @@ class S3StorageBroker(BaseStorageBroker):
                 # If the registration key exists, we use the prefix stored
                 # there
                 self._prefix = rkey['Body'].read().decode()
-                logger.debug('Prefix from registration key: {}'
-                    .format(self._prefix))
+                logger.debug(
+                    'Prefix from registration key: {}'
+                    .format(self._prefix)
+                )
             except botocore.exceptions.ClientError:
                 # If the registration key does not exist, we use the
                 # configured prefix
                 self._prefix = '' if self.dataset_prefix is None \
                     else self.dataset_prefix
-                logger.debug('Prefix from configuration: {}'
-                    .format(self._prefix))
+                logger.debug(
+                    'Prefix from configuration: {}'
+                    .format(self._prefix)
+                )
         return self._prefix
 
     def _generate_key(self, structure_dict_key):
         prefix = self._get_prefix()
-        return prefix + self.uuid + '/' + self._structure_parameters[structure_dict_key]
+        return prefix + self.uuid + '/' + self._structure_parameters[structure_dict_key]  # NOQA
 
     def _generate_key_prefix(self, structure_dict_key):
         return self._generate_key(structure_dict_key) + '/'
@@ -632,7 +635,7 @@ class S3StorageBroker(BaseStorageBroker):
             bucket.objects.filter(Prefix=self.fragments_key_prefix).all()
         ]
 
-        def _chunks(l, n):
+        def _chunks(l, n):  # NOQA
             """Yield successive n-sized chunks from l."""
 
             for i in range(0, len(l), n):

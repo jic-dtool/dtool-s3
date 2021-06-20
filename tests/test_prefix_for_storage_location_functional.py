@@ -2,8 +2,7 @@
 
 import pytest
 
-from . import tmp_uuid_and_uri  # NOQA
-from . import tmp_env_var
+from . import tmp_env_var, S3_TEST_BASE_URI, _remove_dataset
 
 
 def _prefix_contains_something(storage_broker, prefix):
@@ -14,22 +13,49 @@ def _prefix_contains_something(storage_broker, prefix):
     return len(prefix_objects) > 0
 
 
-def test_prefix_functional(tmp_uuid_and_uri):  # NOQA
+def test_prefix_functional():  # NOQA
 
-    uuid, dest_uri = tmp_uuid_and_uri
+    from dtoolcore import DataSetCreator
+    from dtoolcore import DataSet, iter_datasets_in_base_uri
 
-    from dtoolcore import ProtoDataSet, generate_admin_metadata
-    from dtoolcore import DataSet
+    # Create a minimal dataset without a prefix
+    with tmp_env_var("DTOOL_S3_DATASET_PREFIX", ""):
+        with DataSetCreator("no-prefix", S3_TEST_BASE_URI) as ds_creator:
+            ds_creator.put_annotation("prefix", "no")
+            no_prefix_uri = ds_creator.uri
 
-    name = "my_dataset"
-    admin_metadata = generate_admin_metadata(name)
-    admin_metadata["uuid"] = uuid
+    dataset_no_prefix = DataSet.from_uri(no_prefix_uri)
+
+    # Basic test that retrieval works.
+    assert dataset_no_prefix.get_annotation("prefix") == "no"
+
+    # Basic test that prefix is correct.
+    structure_key = dataset_no_prefix._storage_broker.get_structure_key()
+    assert structure_key.startswith(dataset_no_prefix.uuid)
 
     # Create a minimal dataset
     prefix = "u/olssont/"
     with tmp_env_var("DTOOL_S3_DATASET_PREFIX", prefix):
-        proto_dataset = ProtoDataSet(
-            uri=dest_uri,
-            admin_metadata=admin_metadata,
-            config_path=None)
-        assert proto_dataset._storage_broker.get_structure_key().startswith(prefix)
+        with DataSetCreator("no-prefix", S3_TEST_BASE_URI) as ds_creator:
+            ds_creator.put_annotation("prefix", "yes")
+            prefix_uri = ds_creator.uri
+
+    dataset_with_prefix = DataSet.from_uri(prefix_uri)
+
+    # Basic test that retrieval works.
+    assert dataset_with_prefix.get_annotation("prefix") == "yes"
+
+    # Basic test that prefix is correct.
+    structure_key = dataset_with_prefix._storage_broker.get_structure_key()
+    assert structure_key.startswith(prefix)
+
+    # Basic tests that everything can be picked up.
+    dataset_uris = list(
+        ds.uri for ds in
+        iter_datasets_in_base_uri(S3_TEST_BASE_URI)
+    )
+    assert dataset_no_prefix.uri in dataset_uris
+    assert dataset_with_prefix.uri in dataset_uris
+
+    _remove_dataset(dataset_no_prefix.uri)
+    _remove_dataset(dataset_with_prefix.uri)

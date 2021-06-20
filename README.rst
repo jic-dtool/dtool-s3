@@ -58,13 +58,19 @@ Path prefix and access control
 ------------------------------
 
 The S3 plugin supports a configurable prefix to the path. This can be used for
-access control to the dataset. For example, configure::
+access control to the dataset. For example::
+
+    export DTOOL_S3_DATASET_PREFIX="u/olssont"
+
+Alternatively one can edit the ``~/.config/dtool/dtool.json`` file::
 
     {
-       "DTOOL_S3_DATASET_PREFIX_my-bucket": "u/olssont"
+       ...,
+       "DTOOL_S3_DATASET_PREFIX": "u/olssont"
     }
 
-and use the following S3 access to policy to that allows reading all data
+
+Use the following S3 access to policy to that allows reading all data
 in the bucket but only writing to the prefix `u/<username>` and `dtool-`::
 
     {

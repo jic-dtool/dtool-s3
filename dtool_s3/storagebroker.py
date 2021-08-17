@@ -12,6 +12,7 @@ except ImportError:
 import boto3
 import boto3.exceptions
 import botocore.waiter
+from boto3.session import Session
 from botocore.errorfactory import ClientError
 from botocore.exceptions import EndpointConnectionError
 
@@ -200,16 +201,15 @@ class S3StorageBroker(BaseStorageBroker):
     _dtool_readme_txt = _DTOOL_README_TXT
 
     def __init__(self, uri, config_path=None):
-
         parse_result = generous_parse_uri(uri)
-
         self.bucket = parse_result.netloc
         uuid = parse_result.path[1:]
 
         self.dataset_prefix = get_config_value("DTOOL_S3_DATASET_PREFIX")
         self.uuid = uuid
-        self.s3resource = boto3.resource('s3')
-        self.s3client = boto3.client('s3')
+
+        self.s3resource, self.s3client = \
+            self._get_resource_and_client(self.bucket)
 
         self._structure_parameters = _STRUCTURE_PARAMETERS
         self.dataset_registration_key = 'dtool-{}'.format(self.uuid)
@@ -238,6 +238,53 @@ class S3StorageBroker(BaseStorageBroker):
         )
 
     # Generic helper functions.
+
+    @classmethod
+    def _get_resource_and_client(cls, bucket_name):
+        # Get S3 endpoint, access key and secret key. Can be left
+        # unconfigured, in which case the AWS configuration is used.
+        s3_endpoint = get_config_value(
+            "DTOOL_S3_ENDPOINT_{}".format(bucket_name)
+        )
+        s3_access_key_id = get_config_value(
+            "DTOOL_S3_ACCESS_KEY_ID_{}".format(bucket_name)
+        )
+        s3_secret_access_key = get_config_value(
+            "DTOOL_S3_SECRET_ACCESS_KEY_{}".format(bucket_name)
+        )
+
+        if s3_endpoint is not None or s3_access_key_id is not None or \
+            s3_secret_access_key is not None:
+            # We can only proceed if all three of endpoint, access key id and
+            # secret access key are configure
+            if not s3_endpoint or not s3_access_key_id or \
+                not s3_secret_access_key:
+                raise RuntimeError(
+                    "If you want to configure your S3 endpoint for bucket "
+                    "'{bucket}' via the dtool config file, please set "
+                    "DTOOL_S3_ENDPOINT_{bucket}, "
+                    "DTOOL_S3_ACCESS_KEY_ID_{bucket} and "
+                    "DTOOL_S3_SECRET_ACCESS_KEY_{bucket}."
+                    .format(bucket=bucket_name))
+
+            session = Session(
+                aws_access_key_id=s3_access_key_id,
+                aws_secret_access_key=s3_secret_access_key
+            )
+
+            s3resource = session.resource(
+                's3',
+                endpoint_url=s3_endpoint
+            )
+            s3client = session.client(
+                's3',
+                endpoint_url=s3_endpoint
+            )
+        else:
+            s3resource = boto3.resource('s3')
+            s3client = boto3.client('s3')
+
+        return s3resource, s3client
 
     def _get_prefix(self):
         if not hasattr(self, '_prefix'):
@@ -333,7 +380,8 @@ class S3StorageBroker(BaseStorageBroker):
 
         parse_result = generous_parse_uri(base_uri)
         bucket_name = parse_result.netloc
-        bucket = boto3.resource('s3').Bucket(bucket_name)
+        resource, _ = cls._get_resource_and_client(bucket_name)
+        bucket = resource.Bucket(bucket_name)
 
         for obj in bucket.objects.filter(Prefix='dtool').all():
             uuid = obj.key.split('-', 1)[1]

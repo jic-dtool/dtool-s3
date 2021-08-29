@@ -41,7 +41,7 @@ These are needed for the ``boto3`` library, for more details see
 
 
 Configuring custom endpoints
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to configure buckets to make use of custom endpoints. This is useful if one wants to make use of S3 storage not hosted in AWS.
 

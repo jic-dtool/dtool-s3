@@ -31,6 +31,16 @@ Security
 ^^^^^^^^
 
 
+[0.12.0] - 2021-08-29
+---------------------
+
+Added
+^^^^^
+
+- Added ability to specify custom endpoints thanks to `Lars Pastewka
+  <https://github.com/pastewka>`_
+
+
 [0.11.0] - 2021-06-20
 ---------------------
 

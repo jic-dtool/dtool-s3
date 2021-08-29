@@ -253,12 +253,18 @@ class S3StorageBroker(BaseStorageBroker):
             "DTOOL_S3_SECRET_ACCESS_KEY_{}".format(bucket_name)
         )
 
-        if s3_endpoint is not None or s3_access_key_id is not None or \
-            s3_secret_access_key is not None:
+        if (
+            s3_endpoint is not None
+            or s3_access_key_id is not None
+            or s3_secret_access_key is not None
+        ):
             # We can only proceed if all three of endpoint, access key id and
             # secret access key are configure
-            if not s3_endpoint or not s3_access_key_id or \
-                not s3_secret_access_key:
+            if (
+                not s3_endpoint
+                or not s3_access_key_id
+                or not s3_secret_access_key
+            ):
                 raise RuntimeError(
                     "If you want to configure your S3 endpoint for bucket "
                     "'{bucket}' via the dtool config file, please set "

@@ -127,9 +127,23 @@ Testing
 Linux/Mac
 ~~~~~~~~~
 
+All tests need the S3_TEST_BASE_URI environment variable set.
+
 ::
 
     export S3_TEST_BASE_URI="s3://your-dtool-s3-test-bucket"
+
+For the ``tests/test_custom_endpoint_config.py`` test one also needs to specify the S3_TEST_ACCESS_KEY_ID and S3_TEST_SECRET_ACCESS_KEY environment variables.
+
+::
+
+    export S3_TEST_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY
+    export S3_TEST_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
+
+To run the tests.
+
+::
+
     python setup.py develop
     pytest
 
@@ -137,18 +151,48 @@ Linux/Mac
 Windows PowerShell
 ~~~~~~~~~~~~~~~~~~
 
+All tests need the S3_TEST_BASE_URI environment variable set.
+
 ::
 
     $env:S3_TEST_BASE_URI = "s3://your-dtool-s3-test-bucket"
+
+For the ``tests/test_custom_endpoint_config.py`` test one also needs to specify the S3_TEST_ACCESS_KEY_ID and S3_TEST_SECRET_ACCESS_KEY environment variables.
+
+::
+
+    $env:S3_TEST_ACCESS_KEY_ID = YOUR_AWS_ACCESS_KEY
+    $env:S3_TEST_SECRET_ACCESS_KEY = YOUR_AWS_SECRET_ACCESS_KEY
+
+To run the tests.
+
+::
+
     python setup.py develop
     pytest
 
 Windows DOS
 ~~~~~~~~~~~
 
+All tests need the S3_TEST_BASE_URI environment variable set.
+
 ::
 
     setx S3_TEST_BASE_URI "s3://test-dtool-s3-bucket-to"
+    python setup.py develop
+    pytest
+
+For the ``tests/test_custom_endpoint_config.py`` test one also needs to specify the S3_TEST_ACCESS_KEY_ID and S3_TEST_SECRET_ACCESS_KEY environment variables.
+
+::
+
+    setx S3_TEST_ACCESS_KEY_ID YOUR_AWS_ACCESS_KEY
+    setx S3_TEST_SECRET_ACCESS_KEY YOUR_AWS_SECRET_ACCESS_KEY
+
+To run the tests.
+
+::
+
     python setup.py develop
     pytest
 

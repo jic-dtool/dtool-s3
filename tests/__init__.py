@@ -14,7 +14,19 @@ from dtool_s3.storagebroker import (
 _HERE = os.path.dirname(__file__)
 TEST_SAMPLE_DATA = os.path.join(_HERE, "data")
 
-S3_TEST_BASE_URI = os.getenv("S3_TEST_BASE_URI", "s3://test-dtool-s3-bucket")
+# Main bucket used for tests.
+S3_TEST_BASE_URI = os.getenv("S3_TEST_BASE_URI")
+if S3_TEST_BASE_URI is None or S3_TEST_BASE_URI == "":
+    pytest.fail("You need to set the S3_TEST_BASE_URI environment variable to run the tests")  # NOQA
+
+# Variables for testing custom endpoint code.
+S3_TEST_ACCESS_KEY_ID = os.getenv("S3_TEST_ACCESS_KEY_ID")
+if S3_TEST_ACCESS_KEY_ID is None or S3_TEST_ACCESS_KEY_ID == "":
+    pytest.fail("You need to set the S3_TEST_ACCESS_KEY_ID environment variable to run the tests")  # NOQA
+
+S3_TEST_SECRET_ACCESS_KEY = os.getenv("S3_TEST_SECRET_ACCESS_KEY")
+if S3_TEST_SECRET_ACCESS_KEY is None or S3_TEST_SECRET_ACCESS_KEY == "":
+    pytest.fail("You need to set the S3_TEST_SECRET_ACCESS_KEY environment variable to run the tests")  # NOQA
 
 
 @contextmanager

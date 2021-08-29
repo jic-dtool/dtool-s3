@@ -40,6 +40,35 @@ These are needed for the ``boto3`` library, for more details see
 `https://boto3.readthedocs.io/en/latest/guide/quickstart.html <https://boto3.readthedocs.io/en/latest/guide/quickstart.html>`_.
 
 
+Configuring custom endpoints
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible to configure buckets to make use of custom endpoints. This is useful if one wants to make use of S3 storage not hosted in AWS.
+
+Create the file ``.config/dtool/dtool.json`` and add the s3 storage account details
+using the format below::
+
+    {
+       "DTOOL_S3_ENDPOINT_<BUCKET NAME>": "<ENDPOINT URL HERE>",
+       "DTOOL_S3_ACCESS_KEY_<BUCKET NAME>": "<USER NAME HERE>",
+       "DTOOL_S3_SECRET_ACCESS_KEY_<BUCKET NAME>": "<KEY HERE>"
+    }
+
+For example::
+
+    {
+       "DTOOL_S3_ENDPOINT_my-bucket": "http://blueberry.famous.uni.ac.uk",
+       "DTOOL_S3_ACCESS_KEY_ID_my-bucket": "olssont",
+       "DTOOL_S3_SECRET_ACCESS_KEY_my-bucket": "some-secret-token"
+    }
+
+The configuration can also be done using your environment variables. For example on Linux/Mac::
+
+       export DTOOL_S3_ENDPOINT_my-bucket=http://blueberry.famous.uni.ac.uk
+       export DTOOL_S3_ACCESS_KEY_ID_my-bucket=olssont
+       export DTOOL_S3_SECRET_ACCESS_KEY_my-bucket=some-secret-token
+
+
 Usage
 -----
 

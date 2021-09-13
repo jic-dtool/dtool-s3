@@ -14,6 +14,8 @@ Added
 Changed
 ^^^^^^^
 
+- Converted generic ``DTOOL_S3_DATASET_PREFIX`` config key into
+  endpoint-specific ``DTOOL_S3_DATASET_PREFIX_<BUCKET NAME>`` parameter.
 
 Deprecated
 ^^^^^^^^^^

@@ -15,9 +15,15 @@ def test_prefix_functional():  # NOQA
 
     from dtoolcore import DataSetCreator
     from dtoolcore import DataSet, iter_datasets_in_base_uri
+    from dtoolcore.utils import generous_parse_uri
+    from dtool_s3.storagebroker import _sanitize_config_key
+
+    parse_result = generous_parse_uri(S3_TEST_BASE_URI)
+    bucket = parse_result.netloc
+    sanitized_bucket = _sanitize_config_key(bucket)
 
     # Create a minimal dataset without a prefix
-    with tmp_env_var("DTOOL_S3_DATASET_PREFIX", ""):
+    with tmp_env_var("DTOOL_S3_DATASET_PREFIX_{}".format(sanitized_bucket), ""):
         with DataSetCreator("no-prefix", S3_TEST_BASE_URI) as ds_creator:
             ds_creator.put_annotation("prefix", "no")
             no_prefix_uri = ds_creator.uri
@@ -33,7 +39,8 @@ def test_prefix_functional():  # NOQA
 
     # Create a minimal dataset
     prefix = "u/olssont/"
-    with tmp_env_var("DTOOL_S3_DATASET_PREFIX", prefix):
+    with tmp_env_var(
+            "DTOOL_S3_DATASET_PREFIX_{}".format(sanitized_bucket), prefix):
         with DataSetCreator("no-prefix", S3_TEST_BASE_URI) as ds_creator:
             ds_creator.put_annotation("prefix", "yes")
             prefix_uri = ds_creator.uri

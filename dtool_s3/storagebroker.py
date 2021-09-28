@@ -50,16 +50,6 @@ _STRUCTURE_PARAMETERS = {
     "storage_broker_version": __version__,
 }
 
-_ADMIN_METADATA_TYPES = {
-    "created_at": float,
-    "creator_username": str,
-    "dtoolcore_version": str,
-    "frozen_at": float,
-    "name": str,
-    "type": str,
-    "uuid": str,
-}
-
 _DTOOL_README_TXT = """README
 ======
 This is a Dtool dataset stored in S3 accessible storage.
@@ -498,16 +488,11 @@ class S3StorageBroker(BaseStorageBroker):
             self.get_admin_metadata_key()
         ).get()
 
-        # All values in response['Metadata'] are of type str.
-        # This collides with the behavir of other storage brokers, in particular
-        # the default dtoolcore.storagebrokerBaseStorageBroker, which
-        # would return timestamps as floats, see
-        # https://github.com/jic-dtool/dtoolcore/blob/e976c426bef01cc9abdc985e36eae3695d8ee384/dtoolcore/storagebroker.py#L240-L244
-        # Hence, convert as desired:
         admin_metadata = response['Metadata']
-        for key, desired_type in _ADMIN_METADATA_TYPES.items():
-            if key in admin_metadata and not isinstance(admin_metadata[key], desired_type):
-                admin_metadata[key] = desired_type(admin_metadata[key])
+        # s3-native metadata comes as str only, convert timestamps back to float:
+        admin_metadata["frozen_at"] = float(admin_metadata["frozen_at"])
+        if "created_at" in admin_metadata:
+            admin_metadata["created_at"] = float(admin_metadata["created_at"])
         return admin_metadata
 
     def get_size_in_bytes(self, handle):

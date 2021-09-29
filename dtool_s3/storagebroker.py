@@ -489,7 +489,8 @@ class S3StorageBroker(BaseStorageBroker):
         ).get()
 
         admin_metadata = response['Metadata']
-        # s3-native metadata comes as str only, convert timestamps back to float:
+        # s3-native metadata comes as str only, convert timestamps
+        # back to float:
         if "frozen_at" in admin_metadata:
             admin_metadata["frozen_at"] = float(admin_metadata["frozen_at"])
         if "created_at" in admin_metadata:

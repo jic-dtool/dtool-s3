@@ -26,6 +26,10 @@ Removed
 Fixed
 ^^^^^
 
+- Fixed long standing issue with ``created_at`` and ``frozen_at``  admin
+  metadata being returned as string rather than float.  Many thanks to
+  `Johannes L. Hörmann <https://github.com/jotelha>`_ for reporting and fixing.
+  See https://github.com/jic-dtool/dtool-s3/pull/13.
 
 Security
 ^^^^^^^^

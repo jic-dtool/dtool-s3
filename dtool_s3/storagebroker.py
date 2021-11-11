@@ -329,54 +329,6 @@ class S3StorageBroker(BaseStorageBroker):
         obj = self.s3resource.Object(self.bucket, item_key)
         return obj
 
-    def _make_key_public(self, key):
-        acl = self.s3resource.ObjectAcl(self.bucket, key)
-        acl.put(ACL='public-read')
-
-    def _generate_http_manifest(self):
-
-        readme_url = self.generate_key_url(self.get_readme_key())
-        manifest_url = self.generate_key_url(self.get_manifest_key())
-
-        overlays = {}
-        for overlay_name in self.list_overlay_names():
-            overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
-            overlays[overlay_name] = self.generate_key_url(overlay_fpath)
-
-        annotations = {}
-        for ann_name in self.list_annotation_names():
-            ann_fpath = self.annotations_key_prefix + ann_name + '.json'
-            annotations[ann_name] = self.generate_key_url(ann_fpath)
-
-        tags = self.list_tags()
-
-        manifest = self.get_manifest()
-        item_urls = {}
-        for identifier in manifest["items"]:
-            item_urls[identifier] = self.generate_key_url(
-                self.data_key_prefix + identifier
-            )
-
-        http_manifest = {
-            "admin_metadata": self.get_admin_metadata(),
-            "item_urls": item_urls,
-            "overlays": overlays,
-            "annotations": annotations,
-            "tags": tags,
-            "readme_url": readme_url,
-            "manifest_url": manifest_url
-        }
-
-        return http_manifest
-
-    def _write_http_manifest(self, http_manifest):
-
-        self.s3resource.Object(self.bucket, self.http_manifest_key).put(
-            Body=json.dumps(http_manifest)
-        )
-
-        self._make_key_public(self.http_manifest_key)
-
     # Class methods to override.
 
     @classmethod
@@ -739,7 +691,13 @@ class S3StorageBroker(BaseStorageBroker):
 
     # HTTP enabling functions
 
-    def generate_key_url(self, key):
+    def _make_key_public(self, key):
+        acl = self.s3resource.ObjectAcl(self.bucket, key)
+        acl.put(ACL='public-read')
+
+    def _generate_key_url(self, key):
+
+        self._make_key_public(key)
 
         url = "https://{}.s3.amazonaws.com/{}".format(
             self.bucket,
@@ -748,23 +706,52 @@ class S3StorageBroker(BaseStorageBroker):
 
         return url
 
-    def http_enable(self):
-        logger.debug("HTTP enable {}".format(self))
+    def _generate_http_manifest(self):
 
-        self._make_key_public(self.get_readme_key())
-        self._make_key_public(self.get_manifest_key())
+        readme_url = self._generate_key_url(self.get_readme_key())
+        manifest_url = self._generate_key_url(self.get_manifest_key())
 
+        overlays = {}
         for overlay_name in self.list_overlay_names():
             overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
-            self._make_key_public(overlay_fpath)
+            overlays[overlay_name] = self._generate_key_url(overlay_fpath)
 
+        annotations = {}
         for ann_name in self.list_annotation_names():
             ann_fpath = self.annotations_key_prefix + ann_name + '.json'
-            self._make_key_public(ann_fpath)
+            annotations[ann_name] = self._generate_key_url(ann_fpath)
+
+        tags = self.list_tags()
 
         manifest = self.get_manifest()
+        item_urls = {}
         for identifier in manifest["items"]:
-            self._make_key_public(self.data_key_prefix + identifier)
+            item_urls[identifier] = self._generate_key_url(
+                self.data_key_prefix + identifier
+            )
+
+        http_manifest = {
+            "admin_metadata": self.get_admin_metadata(),
+            "item_urls": item_urls,
+            "overlays": overlays,
+            "annotations": annotations,
+            "tags": tags,
+            "readme_url": readme_url,
+            "manifest_url": manifest_url
+        }
+
+        return http_manifest
+
+    def _write_http_manifest(self, http_manifest):
+
+        self.s3resource.Object(self.bucket, self.http_manifest_key).put(
+            Body=json.dumps(http_manifest)
+        )
+
+        self._make_key_public(self.http_manifest_key)
+
+    def http_enable(self):
+        logger.debug("HTTP enable {}".format(self))
 
         http_manifest = self._generate_http_manifest()
         self._write_http_manifest(http_manifest)

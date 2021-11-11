@@ -12,6 +12,7 @@ except ImportError:
 import boto3
 import boto3.exceptions
 import botocore.waiter
+import botocore.exceptions
 from boto3.session import Session
 from botocore.errorfactory import ClientError
 from botocore.exceptions import EndpointConnectionError
@@ -690,19 +691,46 @@ class S3StorageBroker(BaseStorageBroker):
         return metadata
 
     # HTTP enabling functions
+    def _create_presigned_url(self, bucket_name, object_name, expiration):
+        """Generate a presigned URL to share an S3 object
 
-    def _make_key_public(self, key):
+        :param bucket_name: string
+        :param object_name: string
+        :param expiration: Time in seconds for the presigned URL to remain valid
+        :return: Presigned URL as string. If error, returns None.
+        """  # NOQA
+
+        # Generate a presigned URL for the S3 object
+        params = {
+            "Bucket": bucket_name,
+            "Key": object_name
+        }
+        try:
+            url = self.s3client.generate_presigned_url(
+                "get_object",
+                Params=params,
+                ExpiresIn=expiration
+            )
+        except botocore.exceptions.ClientError as e:
+            logger.error(e)
+            return None
+
+        # The response contains the presigned URL
+        return url
+
+    def _make_key_public_noexpiry(self, key):
         acl = self.s3resource.ObjectAcl(self.bucket, key)
         acl.put(ACL='public-read')
-
-    def _generate_key_url(self, key):
-
-        self._make_key_public(key)
 
         url = "https://{}.s3.amazonaws.com/{}".format(
             self.bucket,
             key
         )
+        return url
+
+    def _generate_key_url(self, key):
+
+        url = self._make_key_public_noexpiry(key)
 
         return url
 
@@ -748,13 +776,13 @@ class S3StorageBroker(BaseStorageBroker):
             Body=json.dumps(http_manifest)
         )
 
-        self._make_key_public(self.http_manifest_key)
+        return self._generate_key_url(self.http_manifest_key)
 
     def http_enable(self):
         logger.debug("HTTP enable {}".format(self))
 
         http_manifest = self._generate_http_manifest()
-        self._write_http_manifest(http_manifest)
+        manifest_url = self._write_http_manifest(http_manifest)  # NOQA
 
         access_url = "https://{}.s3.amazonaws.com/{}".format(
             self.bucket,

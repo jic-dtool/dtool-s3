@@ -10,6 +10,10 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
+- Support for presigned URLs when using ``dtool publish``. To enable this feature one needs
+  to set the ``DTOOL_S3_PUBLISH_EXPIRY`` setting to the number of seconds one wants the
+  dataset to be accessible for. 
+
 
 Changed
 ^^^^^^^

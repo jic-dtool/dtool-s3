@@ -691,10 +691,9 @@ class S3StorageBroker(BaseStorageBroker):
         return metadata
 
     # HTTP enabling functions
-    def _create_presigned_url(self, bucket_name, object_name, expiration):
+    def _create_presigned_url(self, object_name, expiration):
         """Generate a presigned URL to share an S3 object
 
-        :param bucket_name: string
         :param object_name: string
         :param expiration: Time in seconds for the presigned URL to remain valid
         :return: Presigned URL as string. If error, returns None.
@@ -702,7 +701,7 @@ class S3StorageBroker(BaseStorageBroker):
 
         # Generate a presigned URL for the S3 object
         params = {
-            "Bucket": bucket_name,
+            "Bucket": self.bucket,
             "Key": object_name
         }
         try:
@@ -728,26 +727,29 @@ class S3StorageBroker(BaseStorageBroker):
         )
         return url
 
-    def _generate_key_url(self, key):
+    def _generate_key_url(self, key, expiry):
 
-        url = self._make_key_public_noexpiry(key)
+        if expiry is None or expiry == "":
+            url = self._make_key_public_noexpiry(key)
+        else:
+            url = self._create_presigned_url(key, expiry)
 
         return url
 
-    def _generate_http_manifest(self):
+    def _generate_http_manifest(self, expiry):
 
-        readme_url = self._generate_key_url(self.get_readme_key())
-        manifest_url = self._generate_key_url(self.get_manifest_key())
+        readme_url = self._generate_key_url(self.get_readme_key(), expiry)
+        manifest_url = self._generate_key_url(self.get_manifest_key(), expiry)
 
         overlays = {}
         for overlay_name in self.list_overlay_names():
             overlay_fpath = self.overlays_key_prefix + overlay_name + '.json'
-            overlays[overlay_name] = self._generate_key_url(overlay_fpath)
+            overlays[overlay_name] = self._generate_key_url(overlay_fpath, expiry)  # NOQA
 
         annotations = {}
         for ann_name in self.list_annotation_names():
             ann_fpath = self.annotations_key_prefix + ann_name + '.json'
-            annotations[ann_name] = self._generate_key_url(ann_fpath)
+            annotations[ann_name] = self._generate_key_url(ann_fpath, expiry)
 
         tags = self.list_tags()
 
@@ -755,7 +757,8 @@ class S3StorageBroker(BaseStorageBroker):
         item_urls = {}
         for identifier in manifest["items"]:
             item_urls[identifier] = self._generate_key_url(
-                self.data_key_prefix + identifier
+                self.data_key_prefix + identifier,
+                expiry
             )
 
         http_manifest = {
@@ -770,24 +773,39 @@ class S3StorageBroker(BaseStorageBroker):
 
         return http_manifest
 
-    def _write_http_manifest(self, http_manifest):
+    def _write_http_manifest(self, http_manifest, expiry):
 
         self.s3resource.Object(self.bucket, self.http_manifest_key).put(
-            Body=json.dumps(http_manifest)
+            Body=json.dumps(http_manifest, indent=2)
         )
 
-        return self._generate_key_url(self.http_manifest_key)
+        return self._generate_key_url(self.http_manifest_key, expiry)
 
     def http_enable(self):
         logger.debug("HTTP enable {}".format(self))
 
-        http_manifest = self._generate_http_manifest()
-        manifest_url = self._write_http_manifest(http_manifest)  # NOQA
+        expiry = get_config_value("DTOOL_S3_PUBLISH_EXPIRY")
+        if expiry is not None:
+            if expiry != "":
+                try:
+                    expiry = int(expiry)
+                except ValueError:
+                    logger.error("DTOOL_S3_PUBLISH_EXPIRY must be set to a value that can be converted to an integer")  # NOQA
+                    raise(RuntimeError())
+        http_manifest = self._generate_http_manifest(expiry)
+        manifest_url = self._write_http_manifest(http_manifest, expiry)  # NOQA
+
+        manifest_presignature = None
+
+        if "?" in manifest_url:
+            _, manifest_presignature = manifest_url.split("?")
 
         access_url = "https://{}.s3.amazonaws.com/{}".format(
             self.bucket,
             self._get_prefix() + self.uuid
         )
+        if manifest_presignature is not None:
+            access_url = access_url + "?" + manifest_presignature
 
         return access_url
 

@@ -83,6 +83,26 @@ To list all the datasets in a S3 bucket one can use the command below::
 
 See the `dtool documentation <http://dtool.readthedocs.io>`_ for more detail.
 
+
+Publishing datasets
+-------------------
+
+It is possible to make datasets stored in S3 publicly accessible using the
+`dtool publish` command. The S3 storage broker supports making datasets
+accessible to the world by setting the ACL to `public-read` (the default) as
+well as giving limited access to datasets using presigned URLS.
+
+To publish a dataset using a presigned URL one needs to set the
+`DTOOL_S3_PUBLISH_EXPIRY` to the number of seconds one wants to make the
+dataset accessible for. For example by adding this setting to the
+`~/.config/dtool/dtool.json` file or by exporting it as an environment
+variable.
+
+::
+
+    export DTOOL_S3_PUBLISH_EXPIRY=3600
+
+
 Path prefix and access control
 ------------------------------
 

@@ -209,7 +209,7 @@ class S3StorageBroker(BaseStorageBroker):
         self.dataset_prefix = get_config_value("DTOOL_S3_DATASET_PREFIX")
         self.uuid = uuid
 
-        self.s3resource, self.s3client = \
+        self.s3resource, self.s3client, self.unsigned_s3client = \
             self._get_resource_and_client(self.bucket)
 
         self._structure_parameters = _STRUCTURE_PARAMETERS
@@ -254,6 +254,9 @@ class S3StorageBroker(BaseStorageBroker):
             "DTOOL_S3_SECRET_ACCESS_KEY_{}".format(bucket_name)
         )
 
+        unsigned_config = botocore.client.Config(
+            signature_version=botocore.UNSIGNED)
+
         if (
             s3_endpoint is not None
             or s3_access_key_id is not None
@@ -287,11 +290,17 @@ class S3StorageBroker(BaseStorageBroker):
                 's3',
                 endpoint_url=s3_endpoint
             )
+            unsigned_s3client = boto3.client(
+                's3',
+                endpoint_url=s3_endpoint,
+                config=unsigned_config
+            )
         else:
             s3resource = boto3.resource('s3')
             s3client = boto3.client('s3')
+            unsigned_s3client = boto3.client('s3', config=unsigned_config)
 
-        return s3resource, s3client
+        return s3resource, s3client, unsigned_s3client
 
     def _get_prefix(self):
         if not hasattr(self, '_prefix'):
@@ -339,7 +348,7 @@ class S3StorageBroker(BaseStorageBroker):
 
         parse_result = generous_parse_uri(base_uri)
         bucket_name = parse_result.netloc
-        resource, _ = cls._get_resource_and_client(bucket_name)
+        resource, _, _ = cls._get_resource_and_client(bucket_name)
         bucket = resource.Bucket(bucket_name)
 
         for obj in bucket.objects.filter(Prefix='dtool').all():
@@ -717,15 +726,18 @@ class S3StorageBroker(BaseStorageBroker):
         # The response contains the presigned URL
         return url
 
+    def _url(self, key):
+        return self.unsigned_s3client.generate_presigned_url(
+            'get_object',
+            ExpiresIn=0,
+            Params={'Bucket': self.bucket,
+                    'Key': key})
+
     def _make_key_public_noexpiry(self, key):
         acl = self.s3resource.ObjectAcl(self.bucket, key)
         acl.put(ACL='public-read')
 
-        url = "https://{}.s3.amazonaws.com/{}".format(
-            self.bucket,
-            key
-        )
-        return url
+        return self._url(key)
 
     def _generate_key_url(self, key, expiry):
 
@@ -800,10 +812,7 @@ class S3StorageBroker(BaseStorageBroker):
         if "?" in manifest_url:
             _, manifest_presignature = manifest_url.split("?")
 
-        access_url = "https://{}.s3.amazonaws.com/{}".format(
-            self.bucket,
-            self._get_prefix() + self.uuid
-        )
+        access_url = self._url(self._get_prefix() + self.uuid)
         if manifest_presignature is not None:
             access_url = access_url + "?" + manifest_presignature
 

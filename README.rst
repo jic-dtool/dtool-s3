@@ -64,14 +64,15 @@ For example::
 
 The configuration can also be done using your environment variables. For example on Linux/Mac::
 
-       export DTOOL_S3_ENDPOINT_my_bucket=http://blueberry.famous.uni.ac.uk
-       export DTOOL_S3_ACCESS_KEY_ID_my_bucket=olssont
-       export DTOOL_S3_SECRET_ACCESS_KEY_my_bucket=some-secret-token
+    env 'DTOOL_S3_ENDPOINT_my-bucket=http://blueberry.famous.uni.ac.uk' \
+        'DTOOL_S3_ACCESS_KEY_ID_my-bucket=olssont' \
+        'DTOOL_S3_SECRET_ACCESS_KEY_my_bucket=some-secret-token' bash
 
-Note that you might want to avoid hyphons in environment variable names.
-For identifying buckets, we can safely replace hyphons with underscores
-(and lowercase letters with uppercase) without introducing ambiguity according
-to the `bucket naming rules <https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html>`_.
+Note that hyphens in environment variable names do not adhere to the
+`POSIX standard <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html>`_
+``export`` will not allow such names, hence the above *workaround* via ``env`` may
+be necessary to modify the environment.
+
 
 Usage
 -----
@@ -113,7 +114,7 @@ Path prefix and access control
 The S3 plugin supports an endpoint-specific configurable prefix to the path.
 This can be used for access control to the dataset. For example::
 
-    export DTOOL_S3_DATASET_PREFIX_my_bucket=u/olssont
+    env 'DTOOL_S3_DATASET_PREFIX_my-bucket=u/olssont' bash
 
 Alternatively one can edit the ``~/.config/dtool/dtool.json`` file::
 

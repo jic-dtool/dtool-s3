@@ -121,55 +121,6 @@ def _upload_file(s3client, fpath, bucket, dest_path, extra_args):
 
     return True
 
-def _sanitize_config_key(key):
-    """Converts lowercase to uppercase and hyphens to underscores.
-
-    :param key: name of lookup value
-    :returns: value associated with the key
-    """
-    return key.upper().replace('-','_')
-
-
-def _get_config_value_from_sanitized_key(key, config_path=None, default=None):
-    """Bucket names may consist of lowercase letters, numbers, dots and hyphens.
-    https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
-    This S3 plugin offers the configuration of bucket-specific keys. For keys
-    specified within the dtool.json config file, this is fine. If specified via
-    environment variables, hyphens and lowercase characters may be an issue,
-    depending on the operating system. Thus, we check for such keys twice:
-    Once the key as passed (i.e. with the bucket name stated exactly as
-    extracted from the URI, which might match the keys in the JSON config file,
-    but might miss settings specified via environment variables), and a second
-    time with a "sanitized" key, with all lowercase letters converted to
-    uppercase and all hyphens converted to underscores. In case of a conflict,
-    i.e. differing non-zero values returned by both methods, we log a warning
-    and use the latter method's result.
-
-    :param key: name of lookup value
-    :param config_path: path to JSON configuration file
-    :param default: default fall back value
-    :returns: value associated with the key
-    """
-    sanitized_key = _sanitize_config_key(key)
-    value_from_literal_key = get_config_value(key)
-    value_from_sanitized_key = get_config_value(sanitized_key)
-
-    if (value_from_literal_key is not None) and (
-            value_from_sanitized_key is not None):
-        if value_from_sanitized_key != value_from_literal_key:
-            logger.warning(
-                "Config key '{key}' and its sanitized variant '{sanitized}' "
-                "yield different values '{value}' and '{sanitized_value}'. "
-                "Latter supersedes former."
-                .format(key=key, sanitized=sanitized_key,
-                        value=value_from_literal_key,
-                        sanitized_value=value_from_sanitized_key))
-        return value_from_sanitized_key
-    elif value_from_sanitized_key is not None:
-        return value_from_sanitized_key
-    else:
-        return value_from_literal_key
-
 
 def _put_item_with_retry(
     s3client,
@@ -255,9 +206,8 @@ class S3StorageBroker(BaseStorageBroker):
         self.bucket = parse_result.netloc
         uuid = parse_result.path[1:]
 
-        self.dataset_prefix = _get_config_value_from_sanitized_key(
-            "DTOOL_S3_DATASET_PREFIX_{}".format(self.bucket)
-        )
+        self.dataset_prefix = get_config_value(
+            "DTOOL_S3_DATASET_PREFIX_{}".format(self.bucket))
 
         self.uuid = uuid
 
@@ -296,13 +246,13 @@ class S3StorageBroker(BaseStorageBroker):
     def _get_resource_and_client(cls, bucket_name):
         # Get S3 endpoint, access key and secret key. Can be left
         # unconfigured, in which case the AWS configuration is used.
-        s3_endpoint = _get_config_value_from_sanitized_key(
+        s3_endpoint = get_config_value(
             "DTOOL_S3_ENDPOINT_{}".format(bucket_name)
         )
-        s3_access_key_id = _get_config_value_from_sanitized_key(
+        s3_access_key_id = get_config_value(
             "DTOOL_S3_ACCESS_KEY_ID_{}".format(bucket_name)
         )
-        s3_secret_access_key = _get_config_value_from_sanitized_key(
+        s3_secret_access_key = get_config_value(
             "DTOOL_S3_SECRET_ACCESS_KEY_{}".format(bucket_name)
         )
 

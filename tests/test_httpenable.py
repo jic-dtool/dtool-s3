@@ -34,7 +34,7 @@ def test_http_manifest(tmp_uuid_and_uri):  # NOQA
     dataset = DataSet.from_uri(dest_uri)
 
     # Test HTTP manifest.
-    http_manifest = dataset._storage_broker._generate_http_manifest(expiry=None)
+    http_manifest = dataset._storage_broker._generate_http_manifest(expiry=None)  # NOQA
     assert "admin_metadata" in http_manifest
     assert http_manifest["admin_metadata"] == dataset._admin_metadata
     assert "overlays" in http_manifest

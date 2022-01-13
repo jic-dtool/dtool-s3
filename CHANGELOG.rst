@@ -10,10 +10,6 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
-- Support for presigned URLs when using ``dtool publish``. To enable this feature one needs
-  to set the ``DTOOL_S3_PUBLISH_EXPIRY`` setting to the number of seconds one wants the
-  dataset to be accessible for. 
-
 
 Changed
 ^^^^^^^
@@ -30,13 +26,28 @@ Removed
 Fixed
 ^^^^^
 
+
+Security
+^^^^^^^^
+
+
+[0.13.0] - 2022-01-13
+---------------------
+
+Added
+^^^^^
+
+- Support for presigned URLs when using ``dtool publish``. To enable this feature one needs
+  to set the ``DTOOL_S3_PUBLISH_EXPIRY`` setting to the number of seconds one wants the
+  dataset to be accessible for. 
+
+Fixed
+^^^^^
+
 - Fixed long standing issue with ``created_at`` and ``frozen_at``  admin
   metadata being returned as string rather than float.  Many thanks to
   `Johannes L. Hörmann <https://github.com/jotelha>`_ for reporting and fixing.
   See https://github.com/jic-dtool/dtool-s3/pull/13.
-
-Security
-^^^^^^^^
 
 
 [0.12.0] - 2021-08-29

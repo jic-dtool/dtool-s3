@@ -4,6 +4,8 @@ import os
 import time
 import random
 
+import base64
+
 try:
     from urlparse import urlunparse
 except ImportError:
@@ -90,6 +92,34 @@ Dataset tags metadata: $UUID/tags/
 
 
 # Helper functions
+
+def _unicode_to_base64(unicode_str):
+    """Convert input string to bytes represented as a string.
+
+    Helper function to deal with the fact that AWS S3 metadata
+    cannot deal with non-ascii characters.
+
+    See: https://github.com/jic-dtool/dtool-s3/issues/14
+    """
+    us2bs = unicode_str.encode("utf-8")
+    us2bs = base64.b64encode(us2bs)
+    us2bs = str(us2bs)
+    us2bs = us2bs[2:-1]
+    return us2bs
+
+
+def _base64_to_unicode(base64_str):
+    """Bytes represented as a string to unicode string.
+
+    Helper function to deal with the fact that AWS S3 metadata
+    cannot deal with non-ascii characters.
+
+    See: https://github.com/jic-dtool/dtool-s3/issues/14
+    """
+    bs2us = base64.b64decode(base64_str)
+    bs2us = bs2us.decode("utf-8")
+    return bs2us
+
 
 def _object_exists(s3resource, bucket, dest_path):
     """Return object from bucket."""
@@ -597,9 +627,11 @@ class S3StorageBroker(BaseStorageBroker):
 
         fname = generate_identifier(relpath)
         dest_path = self.data_key_prefix + fname
+
+        # _unicode_to_base64 used to deal with relpaths that include non-ascii chars.  # NOQA
         extra_args = {
             'Metadata': {
-                'handle': relpath,
+                'handle': _unicode_to_base64(relpath),
                 'checksum': checksum,
             }
         }
@@ -639,9 +671,12 @@ class S3StorageBroker(BaseStorageBroker):
         bucket = self.s3resource.Bucket(self.bucket)
 
         for obj in bucket.objects.filter(Prefix=self.data_key_prefix).all():
-            relpath = obj.get()['Metadata']['handle']
+            handle = obj.get()['Metadata']['handle']
 
-            yield relpath
+            # The handle is a base64 encoded version of the relpath in order
+            # to deal with non-ascii chars in the relpath. We therefore need
+            # to decode it to get the actual relpath.
+            yield _base64_to_unicode(handle)
 
     def pre_freeze_hook(self):
         pass

@@ -10,21 +10,10 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
-- Add support for datasets containing file names with non-ascii characters.
-  This feature has the potential to introduce issues if one has a proto dataset
-  created using an earlier version of dtool-s3 and one then tries to freeze it
-  with this version of dtool. It is not anticipated that anyone encounter this
-  scenario as proto datasets are more or less ephemeral when datasets are copied
-  to s3. This feature fixes https://github.com/jic-dtool/dtool-s3/issues/14.
-  Thanks to `Johannes L. Hörmann <https://github.com/jotelha>`_ and `Lars
-  Pastewka <https://github.com/pastewka>`_ for reporting this issue.
-
 
 Changed
 ^^^^^^^
 
-- Converted generic ``DTOOL_S3_DATASET_PREFIX`` config key into
-  endpoint-specific ``DTOOL_S3_DATASET_PREFIX_<BUCKET NAME>`` parameter.
 
 Deprecated
 ^^^^^^^^^^
@@ -40,6 +29,29 @@ Fixed
 
 Security
 ^^^^^^^^
+
+
+[0.14.0] - 2022-03-09
+---------------------
+
+Added
+^^^^^
+
+- Add support for datasets containing file names with non-ascii characters.
+  This feature has the potential to introduce issues if one has a proto dataset
+  created using an earlier version of dtool-s3 and one then tries to freeze it
+  with this version of dtool. It is not anticipated that anyone encounter this
+  scenario as proto datasets are more or less ephemeral when datasets are copied
+  to s3. This feature fixes https://github.com/jic-dtool/dtool-s3/issues/14.
+  Thanks to `Johannes L. Hörmann <https://github.com/jotelha>`_ and `Lars
+  Pastewka <https://github.com/pastewka>`_ for reporting this issue.
+
+
+Changed
+^^^^^^^
+
+- Converted generic ``DTOOL_S3_DATASET_PREFIX`` config key into
+  endpoint-specific ``DTOOL_S3_DATASET_PREFIX_<BUCKET NAME>`` parameter.
 
 
 [0.13.0] - 2022-01-13

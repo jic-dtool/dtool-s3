@@ -236,7 +236,9 @@ class S3StorageBroker(BaseStorageBroker):
         self.bucket = parse_result.netloc
         uuid = parse_result.path[1:]
 
-        self.dataset_prefix = get_config_value("DTOOL_S3_DATASET_PREFIX")
+        self.dataset_prefix = get_config_value(
+            "DTOOL_S3_DATASET_PREFIX_{}".format(self.bucket))
+
         self.uuid = uuid
 
         self.s3resource, self.s3client, self.unsigned_s3client = \

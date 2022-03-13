@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import time
+import packaging.version
 import random
 
 import base64
@@ -333,6 +334,21 @@ class S3StorageBroker(BaseStorageBroker):
             unsigned_s3client = boto3.client('s3', config=unsigned_config)
 
         return s3resource, s3client, unsigned_s3client
+
+    def _get_upload_storage_broker_version(self):
+        """Return version of dtool-s3 storage broker used to upload the dataset.
+
+        In cases of old datasets (prior to version 0.4.0) this information is
+        not available on the dataset. In these cases this method returns None.
+        """
+        sb_version = None
+        structure_key = self.get_structure_key()
+        if _object_exists(self.s3resource, self.bucket, structure_key):
+            structure_parameters_txt = self.get_text(structure_key)
+            structure_parameters = json.loads(structure_parameters_txt)
+            if "storage_broker_version" in structure_parameters:
+                sb_version = structure_parameters["storage_broker_version"]
+        return sb_version
 
     def _get_prefix(self):
         if not hasattr(self, '_prefix'):
@@ -672,13 +688,30 @@ class S3StorageBroker(BaseStorageBroker):
 
         bucket = self.s3resource.Bucket(self.bucket)
 
+        # Older dtool-s3 datasets, prior to version 0.14.0, use handles that
+        # represent the relative path of the file. These did not support
+        # non-ascii charcters. Since 0.14.0 dtool-s3 datasets therefore use
+        # base64 encoded versions of the relative paths as handles. This means
+        # that we need to work out if the handle is base64 encoded or not to
+        # handle each case appropriately.
+        base64_encoded = True
+        sb_version = self._get_upload_storage_broker_version()
+        if sb_version is not None:
+            if packaging.version.parse(sb_version) < packaging.version.parse("0.14.0"):  # NOQA
+                base64_encoded = False
+        else:
+            base64_encoded = False
+
         for obj in bucket.objects.filter(Prefix=self.data_key_prefix).all():
             handle = obj.get()['Metadata']['handle']
 
             # The handle is a base64 encoded version of the relpath in order
             # to deal with non-ascii chars in the relpath. We therefore need
             # to decode it to get the actual relpath.
-            yield _base64_to_unicode(handle)
+            if base64_encoded:
+                yield _base64_to_unicode(handle)
+            else:
+                yield handle
 
     def pre_freeze_hook(self):
         pass

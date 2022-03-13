@@ -23,6 +23,7 @@ setup(
         "dtoolcore>=3.17",
         "dtool_cli",
         "boto3",
+        "packaging",
     ],
     entry_points={
         "dtool.storage_brokers": [

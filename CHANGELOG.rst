@@ -31,6 +31,21 @@ Security
 ^^^^^^^^
 
 
+[0.14.1] - 2022-03-20
+---------------------
+
+Fixed
+^^^^^
+
+- Fixed issue where changes introduced in 0.14.0 meant that
+  the "dtool verify" command stopped working on datasets created
+  using dtool-s3<0.14.0. This fix means that "dtool verify" works
+  as expected on all dtool-s3 datasets. For more details please
+  see: https://github.com/jic-dtool/dtool-s3/issues/16.
+  Thanks to `Antoine Sanner <https://github.com/AntoineSIMTEK>`_
+  for raising this issue.
+
+
 [0.14.0] - 2022-03-09
 ---------------------
 

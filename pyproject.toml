@@ -1,0 +1,45 @@
+[build-system]
+requires = ["flit_scm"]
+build-backend = "flit_scm:buildapi"
+
+[project]
+name = "dtool-s3"
+description = "Add S3 support to dtool"
+readme = "README.rst"
+license = {text = "MIT"}
+authors = [
+    {name = "Tjelvar Olsson", email = "tjelvar.olsson@gmail.com"}
+]
+dynamic = ["version"]
+requires-python = ">=3.8"
+dependencies = [
+    "click",
+    "dtoolcore>=3.17",
+    "dtool_cli",
+    "boto3",
+    "packaging",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Repository = "https://github.com/jic-dtool/dtool-s3"
+
+[project.entry-points."dtool.storage_brokers"]
+S3StorageBroker = "dtool_s3.storagebroker:S3StorageBroker"
+
+[tool.flit.module]
+name = "dtool_s3"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+write_to = "dtool_s3/version.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=dtool_s3 --cov-report=term-missing"

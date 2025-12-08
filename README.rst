@@ -15,6 +15,7 @@ Features
 - Copy datasets to and from S3 object storage
 - List all the datasets in a S3 bucket
 - Create datasets directly in S3
+- Generate presigned URLs for secure, time-limited access to datasets
 
 Installation
 ------------
@@ -174,6 +175,61 @@ The user also needs write access to toplevel objects that start with `dtool-`.
 Those are the registration keys that are not stored under the configured
 prefix. The registration keys contain the prefix where the respective dataset
 is found. They are empty if no prefix is configured.
+
+
+Signed URLs for programmatic access
+-----------------------------------
+
+The S3 storage broker provides methods for generating presigned URLs, enabling
+secure, time-limited access to datasets without sharing AWS credentials. This
+is particularly useful for server applications like ``dserver`` that need to
+delegate dataset access to clients.
+
+The following methods are available on the storage broker:
+
+``generate_signed_read_url(key, expiry_seconds=3600)``
+    Generate a presigned URL for reading a single object.
+
+``generate_signed_write_url(key, expiry_seconds=3600)``
+    Generate a presigned URL for writing a single object.
+
+``generate_dataset_signed_urls(expiry_seconds=3600)``
+    Generate presigned URLs for all components of a dataset (admin metadata,
+    manifest, README, items, overlays, and annotations).
+
+``supports_signing()``
+    Returns ``True`` to indicate that S3 supports signed URL generation.
+
+Example usage::
+
+    import dtoolcore
+
+    # Load an existing dataset
+    dataset = dtoolcore.DataSet.from_uri("s3://my-bucket/my-dataset-uuid")
+
+    # Access the storage broker
+    storage_broker = dataset._storage_broker
+
+    # Check if signing is supported
+    if storage_broker.supports_signing():
+        # Generate URLs for the entire dataset (valid for 1 hour)
+        urls = storage_broker.generate_dataset_signed_urls(expiry_seconds=3600)
+
+        # URLs dictionary contains:
+        # - 'admin_metadata': URL to read admin metadata
+        # - 'manifest': URL to read manifest
+        # - 'readme': URL to read README
+        # - 'items': dict mapping identifier -> URL for each item
+        # - 'overlays': dict mapping overlay_name -> URL
+        # - 'annotations': dict mapping annotation_name -> URL
+
+        # Generate a URL for a single item
+        item_key = storage_broker.data_key_prefix + item_identifier
+        item_url = storage_broker.generate_signed_read_url(item_key)
+
+These methods are used by ``dserver-signed-url-plugin`` to provide secure
+dataset access through a REST API.
+
 
 Testing
 -------

@@ -822,6 +822,50 @@ class S3StorageBroker(BaseStorageBroker):
             logger.error(f"Failed to generate signed write URL: {e}")
             raise
 
+    def generate_signed_item_write_url(
+            self, relpath, md5_hexdigest, expiry_seconds=3600):
+        """Generate a presigned URL for uploading a dataset item.
+
+        The handle and checksum object metadata (as also set by
+        :meth:`put_item`) and the Content-MD5 of the body are pinned into
+        the signature. The upload is rejected by the storage backend unless
+        the client sends the returned headers verbatim and the uploaded
+        content actually matches ``md5_hexdigest``.
+
+        :param relpath: relative path of the item within the dataset
+        :param md5_hexdigest: MD5 hex digest of the item content
+        :param expiry_seconds: Time in seconds for the presigned URL to remain valid
+        :returns: tuple of (presigned URL, dict of headers that must be sent
+                  with the PUT request)
+        """
+        identifier = generate_identifier(relpath)
+        key = self.data_key_prefix + identifier
+        metadata = {
+            'handle': _unicode_to_base64(relpath),
+            'checksum': md5_hexdigest,
+        }
+        content_md5 = base64.b64encode(
+            bytes.fromhex(md5_hexdigest)).decode('ascii')
+        try:
+            url = self.s3client.generate_presigned_url(
+                'put_object',
+                Params={
+                    'Bucket': self.bucket,
+                    'Key': key,
+                    'Metadata': metadata,
+                    'ContentMD5': content_md5,
+                },
+                ExpiresIn=expiry_seconds
+            )
+        except botocore.exceptions.ClientError as e:
+            logger.error(f"Failed to generate signed item write URL: {e}")
+            raise
+        headers = {'Content-MD5': content_md5}
+        headers.update({
+            f'x-amz-meta-{name}': value for name, value in metadata.items()
+        })
+        return url, headers
+
     def generate_dataset_signed_urls(self, expiry_seconds=3600):
         """Generate all signed URLs needed to access a dataset.
 

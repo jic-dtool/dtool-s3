@@ -290,6 +290,11 @@ class S3StorageBroker(BaseStorageBroker):
         unsigned_config = botocore.client.Config(
             signature_version=botocore.UNSIGNED)
 
+        # Use signature version 4 for presigned URLs - required for cross-network
+        # access where URLs are generated in one network (e.g., container) but
+        # used from another (e.g., host machine)
+        signed_config = botocore.client.Config(signature_version='s3v4')
+
         if (
             s3_endpoint is not None
             or s3_access_key_id is not None
@@ -321,7 +326,8 @@ class S3StorageBroker(BaseStorageBroker):
             )
             s3client = session.client(
                 's3',
-                endpoint_url=s3_endpoint
+                endpoint_url=s3_endpoint,
+                config=signed_config
             )
             unsigned_s3client = boto3.client(
                 's3',
@@ -330,7 +336,7 @@ class S3StorageBroker(BaseStorageBroker):
             )
         else:
             s3resource = boto3.resource('s3')
-            s3client = boto3.client('s3')
+            s3client = boto3.client('s3', config=signed_config)
             unsigned_s3client = boto3.client('s3', config=unsigned_config)
 
         return s3resource, s3client, unsigned_s3client
@@ -499,12 +505,21 @@ class S3StorageBroker(BaseStorageBroker):
         ).get()
 
         admin_metadata = response['Metadata']
-        # s3-native metadata comes as str only, convert timestamps
-        # back to float:
-        if "frozen_at" in admin_metadata:
-            admin_metadata["frozen_at"] = float(admin_metadata["frozen_at"])
-        if "created_at" in admin_metadata:
-            admin_metadata["created_at"] = float(admin_metadata["created_at"])
+
+        # If S3 metadata headers are empty (e.g., when uploaded via presigned URLs),
+        # fall back to reading from the object body
+        if not admin_metadata:
+            body = response['Body'].read().decode('utf-8')
+            if body:
+                admin_metadata = json.loads(body)
+        else:
+            # s3-native metadata comes as str only, convert timestamps
+            # back to float:
+            if "frozen_at" in admin_metadata:
+                admin_metadata["frozen_at"] = float(admin_metadata["frozen_at"])
+            if "created_at" in admin_metadata:
+                admin_metadata["created_at"] = float(admin_metadata["created_at"])
+
         return admin_metadata
 
     def get_size_in_bytes(self, handle):
@@ -768,6 +783,142 @@ class S3StorageBroker(BaseStorageBroker):
             metadata[metadata_key] = value
 
         return metadata
+
+    # Signed URL generation for dserver delegate access
+
+    def generate_signed_read_url(self, key, expiry_seconds=3600):
+        """Generate a presigned URL for reading an object.
+
+        :param key: S3 object key
+        :param expiry_seconds: Time in seconds for the presigned URL to remain valid
+        :returns: Presigned URL as string
+        """
+        try:
+            url = self.s3client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': self.bucket, 'Key': key},
+                ExpiresIn=expiry_seconds
+            )
+            return url
+        except botocore.exceptions.ClientError as e:
+            logger.error(f"Failed to generate signed read URL: {e}")
+            raise
+
+    def generate_signed_write_url(self, key, expiry_seconds=3600):
+        """Generate a presigned URL for writing an object.
+
+        :param key: S3 object key
+        :param expiry_seconds: Time in seconds for the presigned URL to remain valid
+        :returns: Presigned URL as string
+        """
+        try:
+            url = self.s3client.generate_presigned_url(
+                'put_object',
+                Params={'Bucket': self.bucket, 'Key': key},
+                ExpiresIn=expiry_seconds
+            )
+            return url
+        except botocore.exceptions.ClientError as e:
+            logger.error(f"Failed to generate signed write URL: {e}")
+            raise
+
+    def generate_signed_item_write_url(
+            self, relpath, md5_hexdigest, expiry_seconds=3600):
+        """Generate a presigned URL for uploading a dataset item.
+
+        The handle and checksum object metadata (as also set by
+        :meth:`put_item`) and the Content-MD5 of the body are pinned into
+        the signature. The upload is rejected by the storage backend unless
+        the client sends the returned headers verbatim and the uploaded
+        content actually matches ``md5_hexdigest``.
+
+        :param relpath: relative path of the item within the dataset
+        :param md5_hexdigest: MD5 hex digest of the item content
+        :param expiry_seconds: Time in seconds for the presigned URL to remain valid
+        :returns: tuple of (presigned URL, dict of headers that must be sent
+                  with the PUT request)
+        """
+        identifier = generate_identifier(relpath)
+        key = self.data_key_prefix + identifier
+        metadata = {
+            'handle': _unicode_to_base64(relpath),
+            'checksum': md5_hexdigest,
+        }
+        content_md5 = base64.b64encode(
+            bytes.fromhex(md5_hexdigest)).decode('ascii')
+        try:
+            url = self.s3client.generate_presigned_url(
+                'put_object',
+                Params={
+                    'Bucket': self.bucket,
+                    'Key': key,
+                    'Metadata': metadata,
+                    'ContentMD5': content_md5,
+                },
+                ExpiresIn=expiry_seconds
+            )
+        except botocore.exceptions.ClientError as e:
+            logger.error(f"Failed to generate signed item write URL: {e}")
+            raise
+        headers = {'Content-MD5': content_md5}
+        headers.update({
+            f'x-amz-meta-{name}': value for name, value in metadata.items()
+        })
+        return url, headers
+
+    def generate_dataset_signed_urls(self, expiry_seconds=3600):
+        """Generate all signed URLs needed to access a dataset.
+
+        This method returns a dictionary containing signed URLs for:
+        - admin_metadata_url: The dataset administrative metadata (dtool file)
+        - manifest_url: The manifest.json file
+        - readme_url: The README.yml file
+        - item_urls: Dictionary mapping item identifiers to signed URLs
+        - overlay_urls: Dictionary mapping overlay names to signed URLs
+        - annotation_urls: Dictionary mapping annotation names to signed URLs
+
+        :param expiry_seconds: Time in seconds for the presigned URLs to remain valid
+        :returns: Dictionary containing all signed URLs for the dataset
+        """
+        prefix = self._get_prefix()
+
+        urls = {
+            'admin_metadata_url': self.generate_signed_read_url(
+                self.get_admin_metadata_key(), expiry_seconds),
+            'manifest_url': self.generate_signed_read_url(
+                self.get_manifest_key(), expiry_seconds),
+            'readme_url': self.generate_signed_read_url(
+                self.get_readme_key(), expiry_seconds),
+            'item_urls': {},
+            'overlay_urls': {},
+            'annotation_urls': {},
+            'tags': self.list_tags()
+        }
+
+        # Generate URLs for all items
+        manifest = self.get_manifest()
+        for identifier in manifest.get('items', {}).keys():
+            item_key = self.data_key_prefix + identifier
+            urls['item_urls'][identifier] = self.generate_signed_read_url(
+                item_key, expiry_seconds)
+
+        # Generate URLs for all overlays
+        for overlay_name in self.list_overlay_names():
+            overlay_key = self.get_overlay_key(overlay_name)
+            urls['overlay_urls'][overlay_name] = self.generate_signed_read_url(
+                overlay_key, expiry_seconds)
+
+        # Generate URLs for all annotations
+        for annotation_name in self.list_annotation_names():
+            annotation_key = self.get_annotation_key(annotation_name)
+            urls['annotation_urls'][annotation_name] = self.generate_signed_read_url(
+                annotation_key, expiry_seconds)
+
+        return urls
+
+    def supports_signing(self):
+        """Return True as S3 supports signed URL generation."""
+        return True
 
     # HTTP enabling functions
     def _create_presigned_url(self, object_name, expiration):

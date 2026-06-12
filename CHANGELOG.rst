@@ -4,15 +4,29 @@ CHANGELOG
 This project uses `semantic versioning <http://semver.org/>`_.
 This change log uses principles from `keep a changelog <http://keepachangelog.com/>`_.
 
-[Unreleased]
-------------
+[0.15.0] - 2025-12-08
+---------------------
 
 Added
 ^^^^^
 
+- Added ``generate_signed_read_url(key, expiry_seconds)`` method for generating
+  presigned URLs for reading objects from S3
+- Added ``generate_signed_write_url(key, expiry_seconds)`` method for generating
+  presigned URLs for writing objects to S3
+- Added ``generate_dataset_signed_urls(expiry_seconds)`` method for generating
+  all signed URLs needed to access a complete dataset (admin metadata, manifest,
+  README, items, overlays, annotations)
+- Added ``supports_signing()`` method that returns ``True`` to indicate S3
+  supports signed URL generation
+- Added ``get_readme_key()`` method to retrieve the S3 key for the README file
+
 
 Changed
 ^^^^^^^
+
+- Switched build system to flit
+- Updated to use AWS Signature Version 4 for presigned URLs
 
 
 Deprecated
@@ -58,7 +72,7 @@ Added
   with this version of dtool. It is not anticipated that anyone encounter this
   scenario as proto datasets are more or less ephemeral when datasets are copied
   to s3. This feature fixes https://github.com/jic-dtool/dtool-s3/issues/14.
-  Thanks to `Johannes L. Hörmann <https://github.com/jotelha>`_ and `Lars
+  Thanks to `Johannes L. Hï¿½rmann <https://github.com/jotelha>`_ and `Lars
   Pastewka <https://github.com/pastewka>`_ for reporting this issue.
 
 
@@ -84,7 +98,7 @@ Fixed
 
 - Fixed long standing issue with ``created_at`` and ``frozen_at``  admin
   metadata being returned as string rather than float.  Many thanks to
-  `Johannes L. Hörmann <https://github.com/jotelha>`_ for reporting and fixing.
+  `Johannes L. Hï¿½rmann <https://github.com/jotelha>`_ for reporting and fixing.
   See https://github.com/jic-dtool/dtool-s3/pull/13.
 
 

@@ -15,6 +15,11 @@ Added
 - ``S3_TEST_ENDPOINT_URL`` to run ``tests/test_custom_endpoint_config.py``
   against S3 implementations other than AWS
 
+Removed
+^^^^^^^
+
+- Support for Python 3.8 and 3.9; ``requires-python`` is now ``>=3.10``
+
 Fixed
 ^^^^^
 

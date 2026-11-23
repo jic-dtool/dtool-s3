@@ -1,0 +1,112 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+
+    env:
+      # Credentials of the SeaweedFS admin identity (see "Start SeaweedFS").
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: secret12
+      AWS_DEFAULT_REGION: us-east-1
+      # Points boto3's default configuration at SeaweedFS, which is used by
+      # all tests that do not configure a per-bucket endpoint.
+      AWS_ENDPOINT_URL: http://localhost:9000
+      S3_TEST_BASE_URI: s3://dtool-s3-test
+      # Used by tests/test_custom_endpoint_config.py, which configures the
+      # endpoint per bucket via DTOOL_S3_ENDPOINT_<bucket> and friends.
+      S3_TEST_ENDPOINT_URL: http://localhost:9000
+      S3_TEST_ACCESS_KEY_ID: admin
+      S3_TEST_SECRET_ACCESS_KEY: secret12
+
+    steps:
+    # SeaweedFS is started before the checkout so that it boots while the
+    # source code is checked out and the dependencies are installed.
+    # Readiness is checked in the "Create bucket" step below.
+    - name: Start SeaweedFS
+      run: |
+        # The S3 gateway picks up AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY and
+        # creates a matching admin identity. The image is pinned so that a CI
+        # failure means our code changed, not that SeaweedFS released a new
+        # version.
+        docker run -d \
+          --name seaweedfs \
+          -p 9000:9000 \
+          -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+          -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+          chrislusf/seaweedfs:4.41 \
+          server -filer -s3 -s3.port=9000
+
+    - name: Git checkout
+      uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+
+    - name: Set up python3 ${{ matrix.python-version }}
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install requirements
+      run: |
+        python -m pip install --upgrade pip
+        pip install ".[test]"
+        pip list
+
+    - name: Create bucket
+      run: |
+        python - <<'PYEOF'
+        import os
+        import time
+
+        import boto3
+
+        s3 = boto3.client("s3")
+        bucket = os.environ["S3_TEST_BASE_URI"][len("s3://"):]
+
+        # SeaweedFS reports an existing bucket as `BucketAlreadyOwnedByYou`,
+        # other S3 implementations use `BucketAlreadyExists`.
+        already_exists = (
+            s3.exceptions.BucketAlreadyOwnedByYou,
+            s3.exceptions.BucketAlreadyExists,
+        )
+
+        error = None
+        for attempt in range(30):
+            try:
+                s3.create_bucket(Bucket=bucket)
+                break
+            except already_exists:
+                break
+            except Exception as exc:
+                error = exc
+                print(f"Attempt {attempt + 1}: SeaweedFS not ready yet, waiting...")
+                time.sleep(2)
+        else:
+            raise SystemExit(f"SeaweedFS did not become ready: {error}")
+
+        print(f"Bucket '{bucket}' is ready.")
+        PYEOF
+
+    - name: Test with pytest
+      run: |
+        pytest -v -rfEs
+
+    - name: SeaweedFS logs
+      if: failure()
+      run: docker logs seaweedfs 2>&1 | tail -100

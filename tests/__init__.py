@@ -28,12 +28,25 @@ S3_TEST_SECRET_ACCESS_KEY = os.getenv("S3_TEST_SECRET_ACCESS_KEY")
 if S3_TEST_SECRET_ACCESS_KEY is None or S3_TEST_SECRET_ACCESS_KEY == "":
     pytest.fail("You need to set the S3_TEST_SECRET_ACCESS_KEY environment variable to run the tests")  # NOQA
 
+# Endpoint used for testing custom endpoint code. Defaults to AWS; set it to
+# test against another S3 implementation (e.g. SeaweedFS or MinIO in CI).
+S3_TEST_ENDPOINT_URL = os.getenv(
+    "S3_TEST_ENDPOINT_URL", "https://s3.amazonaws.com"
+)
+
 
 @contextmanager
 def tmp_env_var(key, value):
+    """Temporarily set an environment variable, restoring any prior value."""
+    previous = os.environ.get(key)
     os.environ[key] = value
-    yield
-    del os.environ[key]
+    try:
+        yield
+    finally:
+        if previous is None:
+            del os.environ[key]
+        else:
+            os.environ[key] = previous
 
 
 @contextmanager

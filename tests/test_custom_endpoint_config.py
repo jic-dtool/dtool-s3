@@ -5,6 +5,7 @@ from . import (
     S3_TEST_BASE_URI,
     S3_TEST_ACCESS_KEY_ID,
     S3_TEST_SECRET_ACCESS_KEY,
+    S3_TEST_ENDPOINT_URL,
 )
 from . import tmp_env_var
 
@@ -20,7 +21,7 @@ def test_fails_if_only_endpoint_is_set(tmp_uuid_and_uri):  # NOQA
     admin_metadata = generate_admin_metadata(name)
     admin_metadata["uuid"] = uuid
 
-    with tmp_env_var(endpoint_key, "https://s3.amazonaws.com"):
+    with tmp_env_var(endpoint_key, S3_TEST_ENDPOINT_URL):
         with pytest.raises(RuntimeError):
             ProtoDataSet(dest_uri, admin_metadata)
 
@@ -39,7 +40,7 @@ def test_fails_if_any_endpoint_is_missing(tmp_uuid_and_uri):  # NOQA
     admin_metadata["uuid"] = uuid
 
     env_vars = {
-        endpoint_key: "https://s3.amazonaws.com",
+        endpoint_key: S3_TEST_ENDPOINT_URL,
         access_key: S3_TEST_ACCESS_KEY_ID,
         secret_access_key: S3_TEST_SECRET_ACCESS_KEY,
     }
@@ -67,7 +68,7 @@ def test_works_if_all_set(tmp_uuid_and_uri):  # NOQA
     admin_metadata["uuid"] = uuid
 
     env_vars = {
-        endpoint_key: "https://s3.amazonaws.com",
+        endpoint_key: S3_TEST_ENDPOINT_URL,
         access_key: S3_TEST_ACCESS_KEY_ID,
         secret_access_key: S3_TEST_SECRET_ACCESS_KEY,
     }

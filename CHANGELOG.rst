@@ -4,6 +4,31 @@ CHANGELOG
 This project uses `semantic versioning <http://semver.org/>`_.
 This change log uses principles from `keep a changelog <http://keepachangelog.com/>`_.
 
+[Unreleased]
+------------
+
+Added
+^^^^^
+
+- GitHub Actions workflow running the test suite against SeaweedFS on
+  Python 3.10-3.14
+- ``S3_TEST_ENDPOINT_URL`` to run ``tests/test_custom_endpoint_config.py``
+  against S3 implementations other than AWS
+
+Fixed
+^^^^^
+
+- Overlay and annotation names containing dots (e.g. ``v1.2``), which
+  ``dtoolcore.utils.name_is_valid`` allows, made ``list_overlay_names`` and
+  ``list_annotation_names`` raise ``ValueError`` for the whole dataset
+- Item metadata keys containing dots (e.g. ``my.key``) were read back by
+  ``get_item_metadata`` with only the part after the last dot, silently
+  renaming the resulting overlay
+- ``_list_historical_readme_keys`` created a new ``boto3.resource('s3')``
+  instead of using the broker's configured resource, ignoring custom
+  endpoints and credentials (e.g. MinIO)
+
+
 [0.15.0] - 2025-12-08
 ---------------------
 
@@ -40,15 +65,6 @@ Removed
 Fixed
 ^^^^^
 
-- Overlay and annotation names containing dots (e.g. ``v1.2``), which
-  ``dtoolcore.utils.name_is_valid`` allows, made ``list_overlay_names`` and
-  ``list_annotation_names`` raise ``ValueError`` for the whole dataset
-- Item metadata keys containing dots (e.g. ``my.key``) were read back by
-  ``get_item_metadata`` with only the part after the last dot, silently
-  renaming the resulting overlay
-- ``_list_historical_readme_keys`` created a new ``boto3.resource('s3')``
-  instead of using the broker's configured resource, ignoring custom
-  endpoints and credentials (e.g. MinIO)
 
 Security
 ^^^^^^^^

@@ -40,6 +40,12 @@ Removed
 Fixed
 ^^^^^
 
+- Overlay and annotation names containing dots (e.g. ``v1.2``), which
+  ``dtoolcore.utils.name_is_valid`` allows, made ``list_overlay_names`` and
+  ``list_annotation_names`` raise ``ValueError`` for the whole dataset
+- Item metadata keys containing dots (e.g. ``my.key``) were read back by
+  ``get_item_metadata`` with only the part after the last dot, silently
+  renaming the resulting overlay
 
 Security
 ^^^^^^^^

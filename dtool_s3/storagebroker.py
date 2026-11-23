@@ -610,7 +610,8 @@ class S3StorageBroker(BaseStorageBroker):
         ).all():
 
             overlay_file = obj.key.rsplit('/', 1)[-1]
-            overlay_name, ext = overlay_file.split('.')
+            # Overlay names may contain dots; only strip the extension.
+            overlay_name, ext = overlay_file.rsplit('.', 1)
             overlay_names.append(overlay_name)
 
         return overlay_names
@@ -627,7 +628,8 @@ class S3StorageBroker(BaseStorageBroker):
         ).all():
 
             annotation_file = obj.key.rsplit('/', 1)[-1]
-            annotation_name, ext = annotation_file.split('.')
+            # Annotation names may contain dots; only strip the extension.
+            annotation_name, ext = annotation_file.rsplit('.', 1)
             annotation_names.append(annotation_name)
 
         return annotation_names
@@ -773,9 +775,15 @@ class S3StorageBroker(BaseStorageBroker):
         metadata = {}
 
         identifier = generate_identifier(handle)
-        prefix = self.fragments_key_prefix + '{}'.format(identifier)
+        # Fragment keys are "<identifier>.<key>.json". The metadata key may
+        # itself contain dots, so strip the known prefix and suffix rather
+        # than splitting on dots.
+        prefix = self.fragments_key_prefix + '{}.'.format(identifier)
+        suffix = '.json'
         for obj in bucket.objects.filter(Prefix=prefix).all():
-            metadata_key = obj.key.split('.')[-2]
+            if not obj.key.endswith(suffix):
+                continue
+            metadata_key = obj.key[len(prefix):-len(suffix)]
             response = obj.get()
             value_as_string = response['Body'].read().decode('utf-8')
             value = json.loads(value_as_string)

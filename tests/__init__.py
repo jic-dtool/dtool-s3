@@ -28,6 +28,12 @@ S3_TEST_SECRET_ACCESS_KEY = os.getenv("S3_TEST_SECRET_ACCESS_KEY")
 if S3_TEST_SECRET_ACCESS_KEY is None or S3_TEST_SECRET_ACCESS_KEY == "":
     pytest.fail("You need to set the S3_TEST_SECRET_ACCESS_KEY environment variable to run the tests")  # NOQA
 
+# Endpoint that boto3's default configuration talks to. AWS_ENDPOINT_URL
+# points it at another S3 implementation (e.g. SeaweedFS in CI).
+S3_DEFAULT_ENDPOINT_URL = os.getenv(
+    "AWS_ENDPOINT_URL", "https://s3.amazonaws.com"
+)
+
 # Endpoint used for testing custom endpoint code. Defaults to AWS; set it to
 # test against another S3 implementation (e.g. SeaweedFS or MinIO in CI).
 S3_TEST_ENDPOINT_URL = os.getenv(

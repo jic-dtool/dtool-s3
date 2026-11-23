@@ -5,7 +5,7 @@ Add S3 support to dtool
    :target: http://badge.fury.io/py/dtool-s3
    :alt: PyPi package
 
-- GitHub: https://github.com/jic-dtool/dtool-S3
+- GitHub: https://github.com/jic-dtool/dtool-s3
 - PyPI: https://pypi.python.org/pypi/dtool-S3
 - Free software: MIT License
 
@@ -343,4 +343,4 @@ Related packages
 - `dtool-http <https://github.com/jic-dtool/dtool-http>`_
 - `dtool-azure <https://github.com/jic-dtool/dtool-azure>`_
 - `dtool-irods <https://github.com/jic-dtool/dtool-irods>`_
-- `dtool-smb <https://github.com/IMTEK-Simulation/dtool-smb>`_
+- `dtool-smb <https://github.com/jic-dtool/dtool-smb>`_

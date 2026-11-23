@@ -46,6 +46,9 @@ Fixed
 - Item metadata keys containing dots (e.g. ``my.key``) were read back by
   ``get_item_metadata`` with only the part after the last dot, silently
   renaming the resulting overlay
+- ``_list_historical_readme_keys`` created a new ``boto3.resource('s3')``
+  instead of using the broker's configured resource, ignoring custom
+  endpoints and credentials (e.g. MinIO)
 
 Security
 ^^^^^^^^

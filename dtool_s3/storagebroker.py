@@ -1053,7 +1053,7 @@ class S3StorageBroker(BaseStorageBroker):
         prefix = self.get_readme_key() + "-"
         historical_readme_keys = []
 
-        bucket = boto3.resource('s3').Bucket(self.bucket)
+        bucket = self.s3resource.Bucket(self.bucket)
         for obj in bucket.objects.filter(Prefix=prefix).all():
             historical_readme_keys.append(obj.key)
 

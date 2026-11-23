@@ -40,17 +40,37 @@ jobs:
     # Readiness is checked in the "Create bucket" step below.
     - name: Start SeaweedFS
       run: |
-        # The S3 gateway picks up AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY and
-        # creates a matching admin identity. The image is pinned so that a CI
-        # failure means our code changed, not that SeaweedFS released a new
-        # version.
+        # Identities of the S3 gateway: an admin with the credentials above,
+        # and anonymous read access. The latter stands in for the public-read
+        # objects that http_enable() relies on (tests/test_httpenable.py);
+        # SeaweedFS answers anonymous requests with 403 otherwise.
+        mkdir -p /tmp/seaweedfs
+        cat > /tmp/seaweedfs/s3.json <<JSON
+        {
+          "identities": [
+            {
+              "name": "admin",
+              "credentials": [
+                {"accessKey": "$AWS_ACCESS_KEY_ID",
+                 "secretKey": "$AWS_SECRET_ACCESS_KEY"}
+              ],
+              "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+            },
+            {
+              "name": "anonymous",
+              "actions": ["Read"]
+            }
+          ]
+        }
+        JSON
+        # The image is pinned so that a CI failure means our code changed,
+        # not that SeaweedFS released a new version.
         docker run -d \
           --name seaweedfs \
           -p 9000:9000 \
-          -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-          -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+          -v /tmp/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro \
           chrislusf/seaweedfs:4.41 \
-          server -filer -s3 -s3.port=9000
+          server -filer -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json
 
     - name: Git checkout
       uses: actions/checkout@v7

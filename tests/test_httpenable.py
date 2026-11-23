@@ -1,8 +1,10 @@
 import os
+from urllib.parse import urlparse
 
 
 from . import tmp_uuid_and_uri  # NOQA
 from . import TEST_SAMPLE_DATA
+from . import S3_DEFAULT_ENDPOINT_URL
 from . import tmp_env_var
 
 
@@ -82,7 +84,9 @@ def test_http_enable(tmp_uuid_and_uri):  # NOQA
     access_url = dataset._storage_broker.http_enable()
     assert access_url.find("?") == -1  # This is not a presigned URL dataset.
 
-    assert access_url.startswith("https://")
+    # Served with the scheme of the endpoint (https on AWS).
+    assert access_url.startswith(
+        urlparse(S3_DEFAULT_ENDPOINT_URL).scheme + "://")
 
     dataset_from_http = DataSet.from_uri(access_url)
 
@@ -149,7 +153,9 @@ def test_http_enable_with_presigned_url(tmp_uuid_and_uri):  # NOQA
         access_url = dataset._storage_broker.http_enable()
     assert access_url.find("?") != -1  # This is a presigned URL dataset.
 
-    assert access_url.startswith("https://")
+    # Served with the scheme of the endpoint (https on AWS).
+    assert access_url.startswith(
+        urlparse(S3_DEFAULT_ENDPOINT_URL).scheme + "://")
 
     dataset_from_http = DataSet.from_uri(access_url)
 

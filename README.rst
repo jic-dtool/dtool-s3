@@ -254,8 +254,35 @@ To run the tests.
 
 ::
 
-    python setup.py develop
+    pip install -e ".[test]"
     pytest
+
+Against a local S3 server
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The tests can run against any S3 implementation instead of AWS. CI uses
+SeaweedFS (see ``.github/workflows/test.yml``, which also grants the anonymous
+read access that ``tests/test_httpenable.py`` needs). ``AWS_ENDPOINT_URL``
+points boto3's default configuration at the server, and
+``S3_TEST_ENDPOINT_URL`` sets the endpoint used by
+``tests/test_custom_endpoint_config.py`` (default: AWS).
+
+::
+
+    docker run -d --name seaweedfs -p 9000:9000 \
+        -e AWS_ACCESS_KEY_ID=admin -e AWS_SECRET_ACCESS_KEY=secret12 \
+        chrislusf/seaweedfs:4.41 server -filer -s3 -s3.port=9000
+
+    export AWS_ACCESS_KEY_ID=admin AWS_SECRET_ACCESS_KEY=secret12
+    export AWS_DEFAULT_REGION=us-east-1 AWS_ENDPOINT_URL=http://localhost:9000
+    export S3_TEST_BASE_URI=s3://dtool-s3-test
+    export S3_TEST_ENDPOINT_URL=http://localhost:9000
+    export S3_TEST_ACCESS_KEY_ID=admin S3_TEST_SECRET_ACCESS_KEY=secret12
+    python -c "import boto3; boto3.client('s3').create_bucket(Bucket='dtool-s3-test')"
+    pytest
+
+Without the anonymous read access from the CI configuration,
+``test_http_enable`` fails with ``403``.
 
 
 Windows PowerShell

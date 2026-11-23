@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_scm"]
-build-backend = "flit_scm:buildapi"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "dtool-s3"
@@ -33,13 +33,18 @@ Repository = "https://github.com/jic-dtool/dtool-s3"
 [project.entry-points."dtool.storage_brokers"]
 S3StorageBroker = "dtool_s3.storagebroker:S3StorageBroker"
 
-[tool.flit.module]
-name = "dtool_s3"
+[tool.hatch.version]
+source = "vcs"
+raw-options = { version_scheme = "guess-next-dev", local_scheme = "no-local-version" }
 
-[tool.setuptools_scm]
-version_scheme = "guess-next-dev"
-local_scheme = "no-local-version"
-write_to = "dtool_s3/version.py"
+[tool.hatch.build.hooks.vcs]
+version-file = "dtool_s3/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dtool_s3"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [".github", ".pre-commit-config.yaml", "CLAUDE.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

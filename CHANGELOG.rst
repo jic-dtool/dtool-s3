@@ -10,31 +10,28 @@ This change log uses principles from `keep a changelog <http://keepachangelog.co
 Added
 ^^^^^
 
-- GitHub Actions workflow running the test suite against SeaweedFS on
-  Python 3.10-3.14
-- ``S3_TEST_ENDPOINT_URL`` to run ``tests/test_custom_endpoint_config.py``
-  against S3 implementations other than AWS
+
+Changed
+^^^^^^^
+
+
+Deprecated
+^^^^^^^^^^
+
 
 Removed
 ^^^^^^^
 
-- Support for Python 3.8 and 3.9; ``requires-python`` is now ``>=3.10``
 
 Fixed
 ^^^^^
 
-- Overlay and annotation names containing dots (e.g. ``v1.2``), which
-  ``dtoolcore.utils.name_is_valid`` allows, made ``list_overlay_names`` and
-  ``list_annotation_names`` raise ``ValueError`` for the whole dataset
-- Item metadata keys containing dots (e.g. ``my.key``) were read back by
-  ``get_item_metadata`` with only the part after the last dot, silently
-  renaming the resulting overlay
-- ``_list_historical_readme_keys`` created a new ``boto3.resource('s3')``
-  instead of using the broker's configured resource, ignoring custom
-  endpoints and credentials (e.g. MinIO)
+
+Security
+^^^^^^^^
 
 
-[0.15.0] - 2025-12-08
+[0.15.0] - 2026-11-23
 ---------------------
 
 Added
@@ -50,12 +47,17 @@ Added
 - Added ``supports_signing()`` method that returns ``True`` to indicate S3
   supports signed URL generation
 - Added ``get_readme_key()`` method to retrieve the S3 key for the README file
+- GitHub Actions workflow running the test suite against SeaweedFS on
+  Python 3.10-3.14
+- ``S3_TEST_ENDPOINT_URL`` to run ``tests/test_custom_endpoint_config.py``
+  against S3 implementations other than AWS
 
 
 Changed
 ^^^^^^^
 
-- Switched build system to flit
+- Build system changed from ``setuptools`` to ``hatchling`` with
+  ``hatch-vcs``; the version is still derived from git tags
 - Updated to use AWS Signature Version 4 for presigned URLs
 
 
@@ -66,9 +68,21 @@ Deprecated
 Removed
 ^^^^^^^
 
+- Support for Python 3.8 and 3.9; ``requires-python`` is now ``>=3.10``
+
 
 Fixed
 ^^^^^
+
+- Overlay and annotation names containing dots (e.g. ``v1.2``), which
+  ``dtoolcore.utils.name_is_valid`` allows, made ``list_overlay_names`` and
+  ``list_annotation_names`` raise ``ValueError`` for the whole dataset
+- Item metadata keys containing dots (e.g. ``my.key``) were read back by
+  ``get_item_metadata`` with only the part after the last dot, silently
+  renaming the resulting overlay
+- ``_list_historical_readme_keys`` created a new ``boto3.resource('s3')``
+  instead of using the broker's configured resource, ignoring custom
+  endpoints and credentials (e.g. MinIO)
 
 
 Security
